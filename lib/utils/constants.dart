@@ -1,6 +1,6 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static const String baseUrl = 'http://192.168.1.73:3000/futsmandu/api/v2';
   static const String apiVersion = 'v1';
 
   // Storage Keys
