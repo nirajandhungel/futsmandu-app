@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/court_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
+import '../../utils/constants.dart';
 import '../../widgets/common/loading.dart';
 import '../../widgets/common/error_widget.dart';
 import '../../widgets/court/futsal_card.dart';
+import '../../widgets/common/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,17 +53,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Futsmandu'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
             onPressed: () {
-              // Navigate to profile
-              Helpers.showSnackbar(context, 'Profile coming soon!');
+              Scaffold.of(context).openDrawer();
             },
+          ),
+        ),
+        title: const Text('FUTSMANDU'),
+        centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                context.push(RouteNames.profile);
+              },
+              child: Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  return CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      authProvider.user?.fullName.isNotEmpty ?? false
+                          ? authProvider.user!.fullName[0].toUpperCase()
+                          : 'U',
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Search Section
@@ -73,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search futsal courts...',
+                    hintText: 'Search',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.clear),
@@ -85,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   onSubmitted: (_) => _searchCourts(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 // City Filter
                 Row(
                   children: [
@@ -109,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // Courts List
+          // Courts List (now starts immediately after search section)
           Expanded(
             child: Consumer<CourtProvider>(
               builder: (context, provider, _) {
@@ -117,19 +147,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const LoadingWidget(message: 'Loading courts...');
                 }
 
-                if (provider.errorMessage != null) {
-                  return AppErrorWidget(
-                    message: provider.errorMessage!,
-                    onRetry: _loadCourts,
-                  );
-                }
-
                 if (provider.courts.isEmpty) {
-                  return EmptyStateWidget(
-                    message: 'No futsal courts found',
-                    actionText: 'Refresh',
-                    onAction: _loadCourts,
-                    icon: Icons.sports_soccer,
+                  return const Center(
+                    child: Text(
+                      'No futsal courts found',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
                   );
                 }
 
@@ -142,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       return FutsalCard(
                         futsalCourt: provider.courts[index],
                         onTap: () {
-                          // Navigate to court detail
                           Helpers.showSnackbar(
                             context,
                             'Court detail coming soon!',

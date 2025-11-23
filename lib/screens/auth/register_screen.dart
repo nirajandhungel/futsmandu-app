@@ -128,43 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Role Selection
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'I am a',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Player'),
-                            value: AppConstants.rolePlayer,
-                            groupValue: _selectedRole,
-                            onChanged: (value) {
-                              setState(() => _selectedRole = value!);
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Owner'),
-                            value: AppConstants.roleOwner,
-                            groupValue: _selectedRole,
-                            onChanged: (value) {
-                              setState(() => _selectedRole = value!);
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                //   const SizedBox(height: 20),
                 // Password
                 AppPasswordField(
                   label: 'Password',

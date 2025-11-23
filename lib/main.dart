@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:futsmandu_flutter/screens/profile/edit_profile.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
@@ -12,6 +13,8 @@ import 'utils/constants.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/profile/edit_profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,47 +45,57 @@ class FutsmanduApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             themeMode: themeProvider.themeMode,
-            routerConfig: _router,
+            routerConfig: GoRouter(
+              initialLocation: RouteNames.login,
+              redirect: (context, state) {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final isAuthenticated = authProvider.isAuthenticated;
+                final isAuthRoute = state.matchedLocation == RouteNames.login ||
+                    state.matchedLocation == RouteNames.register;
+
+                // If still loading, don't redirect yet
+                if (authProvider.status == AuthStatus.loading) {
+                  return null;
+                }
+
+                // Redirect to home if authenticated and trying to access auth routes
+                if (isAuthenticated && isAuthRoute) {
+                  return RouteNames.home;
+                }
+
+                // Redirect to login if not authenticated and trying to access protected routes
+                if (!isAuthenticated && !isAuthRoute) {
+                  return RouteNames.login;
+                }
+
+                return null;
+              },
+              routes: [
+                GoRoute(
+                  path: RouteNames.login,
+                  builder: (context, state) => const LoginScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.register,
+                  builder: (context, state) => const RegisterScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.home,
+                  builder: (context, state) => const HomeScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.profile,
+                  builder: (context, state) => const ProfileScreen(),
+                ),
+                GoRoute(
+                  path: '/editProfile',
+                  builder: (context, state) => const EditProfileScreen(),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 }
-
-// Router Configuration
-final _router = GoRouter(
-  initialLocation: RouteNames.login,
-  redirect: (context, state) {
-    final authProvider = context.read<AuthProvider>();
-    final isAuthenticated = authProvider.isAuthenticated;
-    final isAuthRoute = state.matchedLocation == RouteNames.login ||
-        state.matchedLocation == RouteNames.register;
-
-    // Redirect to home if authenticated and trying to access auth routes
-    if (isAuthenticated && isAuthRoute) {
-      return RouteNames.home;
-    }
-
-    // Redirect to login if not authenticated and trying to access protected routes
-    if (!isAuthenticated && !isAuthRoute) {
-      return RouteNames.login;
-    }
-
-    return null;
-  },
-  routes: [
-    GoRoute(
-      path: RouteNames.login,
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: RouteNames.register,
-      builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(
-      path: RouteNames.home,
-      builder: (context, state) => const HomeScreen(),
-    ),
-  ],
-);

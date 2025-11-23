@@ -102,6 +102,9 @@ class AuthProvider with ChangeNotifier {
     _status = AuthStatus.loading;
     notifyListeners();
 
+    // Add a small delay to ensure state is updated before navigation
+    await Future.delayed(const Duration(milliseconds: 100));
+
     try {
       await _authService.logout();
       _user = null;
@@ -109,6 +112,7 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated; // Still set to unauthenticated even on error
     }
 
     notifyListeners();

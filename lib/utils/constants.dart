@@ -1,7 +1,7 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'http://192.168.1.73:3000/futsmandu/api/v2';
-  static const String apiVersion = 'v1';
+  static const String baseUrl = 'https://futsmandu-server.onrender.com/futsmandu/api/v2';
+  static const String apiVersion = 'v2';
 
   // Storage Keys
   static const String accessTokenKey = 'access_token';
