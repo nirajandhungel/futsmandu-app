@@ -6,7 +6,6 @@ import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 
-
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -21,7 +20,6 @@ class AppDrawer extends StatelessWidget {
 
     if (!confirmed || !context.mounted) return;
 
-    // Show loading
     Helpers.showLoadingDialog(context);
 
     final authProvider = context.read<AuthProvider>();
@@ -29,14 +27,11 @@ class AppDrawer extends StatelessWidget {
 
     if (!context.mounted) return;
 
-    // Hide loading
     Navigator.pop(context);
-
-    // Navigate to login
     context.go(RouteNames.login);
-
     Helpers.showSnackbar(context, 'Logged out successfully');
   }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -47,7 +42,6 @@ class AppDrawer extends StatelessWidget {
           return ListView(
             padding: EdgeInsets.zero,
             children: [
-              // Drawer Header
               UserAccountsDrawerHeader(
                 decoration: const BoxDecoration(
                   color: AppTheme.primaryColor,
@@ -74,6 +68,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 accountEmail: Text(user?.email ?? ''),
               ),
+
               // Home
               ListTile(
                 leading: const Icon(Icons.home),
@@ -82,6 +77,7 @@ class AppDrawer extends StatelessWidget {
                   Navigator.pop(context);
                 },
               ),
+
               // Book a Venue
               ListTile(
                 leading: const Icon(Icons.sports_soccer),
@@ -91,6 +87,7 @@ class AppDrawer extends StatelessWidget {
                   Helpers.showSnackbar(context, 'Browse courts to book!');
                 },
               ),
+
               // My Bookings
               ListTile(
                 leading: const Icon(Icons.book_online),
@@ -100,6 +97,7 @@ class AppDrawer extends StatelessWidget {
                   context.push(RouteNames.bookingHistory);
                 },
               ),
+
               // Join Teammates
               ListTile(
                 leading: const Icon(Icons.group),
@@ -109,7 +107,9 @@ class AppDrawer extends StatelessWidget {
                   Helpers.showSnackbar(context, 'Find teammates coming soon!');
                 },
               ),
+
               const Divider(),
+
               // Profile
               ListTile(
                 leading: const Icon(Icons.person),
@@ -119,6 +119,7 @@ class AppDrawer extends StatelessWidget {
                   context.push(RouteNames.profile);
                 },
               ),
+
               // Settings
               ListTile(
                 leading: const Icon(Icons.settings),
@@ -128,6 +129,7 @@ class AppDrawer extends StatelessWidget {
                   Helpers.showSnackbar(context, 'Settings coming soon!');
                 },
               ),
+
               // Help & Support
               ListTile(
                 leading: const Icon(Icons.help),
@@ -137,11 +139,35 @@ class AppDrawer extends StatelessWidget {
                   Helpers.showSnackbar(context, 'Support coming soon!');
                 },
               ),
+
               const Divider(),
-              // Logout
+
+              // Owner Dashboard
+              if (user?.isOwner ?? false)
+                ListTile(
+                  leading: const Icon(Icons.dashboard),
+                  title: const Text('Owner Dashboard'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(RouteNames.ownerDashboard);
+                  },
+                ),
+
+              // Admin Dashboard
+              if (user?.isAdmin ?? false)
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings),
+                  title: const Text('Admin Dashboard'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(RouteNames.adminDashboard);
+                  },
+                ),
+
+              const Divider(),
               const SizedBox(height: 8),
 
-// Logout Button
+              // Logout button
               SizedBox(
                 width: double.infinity,
                 height: 57,
@@ -159,21 +185,21 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-            // Owner Mode Button
+              // Owner Mode Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pop(context);
-                    Helpers.showSnackbar(context, "Owner mode coming soon!");
+                    Navigator.pop(context); // close drawer
+                    context.push('/owner-kyc'); // navigate to Owner KYC screen
                   },
-                  icon: const Icon(Icons.admin_panel_settings),
+                  icon: const Icon(Icons.business_center),
                   label: const Text('Owner Mode'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -183,7 +209,6 @@ class AppDrawer extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
-
             ],
           );
         },

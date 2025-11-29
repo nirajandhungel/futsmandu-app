@@ -83,9 +83,10 @@ class ApiService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        final tokens = response.data['data']['tokens'];
-        await _storage.saveAccessToken(tokens['accessToken']);
-        await _storage.saveRefreshToken(tokens['refreshToken']);
+        // Server returns: { success: true, data: { accessToken: "...", refreshToken: "..." } }
+        final data = response.data['data'] as Map<String, dynamic>;
+        await _storage.saveAccessToken(data['accessToken']);
+        await _storage.saveRefreshToken(data['refreshToken']);
         return true;
       }
       return false;

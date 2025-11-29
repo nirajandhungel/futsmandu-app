@@ -12,12 +12,14 @@ import 'utils/theme.dart';
 import 'utils/constants.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/dashboard/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
 // import 'screens/profile/edit_profile.dart';
 import 'screens/home/bhaktapur_futsal.dart';
 import 'screens/home/kathmandu_futsal.dart';
 import 'screens/home/lalitpur_futsal.dart';
+import 'screens/dashboard/owner_dashboard.dart';
+import 'screens/dashboard/admin_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,6 +107,14 @@ class FutsmanduApp extends StatelessWidget {
                 GoRoute(
                   path: '/lalitpur-futsal',
                   builder: (context, state) => const LalitpurFutsalScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.ownerDashboard,
+                  builder: (context, state) => const OwnerDashboardScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.adminDashboard,
+                  builder: (context, state) => const AdminDashboardScreen(),
                 ),
               ],
             ),

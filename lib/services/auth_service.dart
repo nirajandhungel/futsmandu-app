@@ -1,5 +1,4 @@
 import '../models/user.dart';
-import '../models/api_response.dart';
 import '../utils/constants.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -27,7 +26,9 @@ class AuthService {
         throw Exception(response.message ?? 'Login failed');
       }
 
-      final authResponse = AuthResponse.fromJson(response.data!);
+      // Server returns: { user: {...}, tokens: {...} }
+      final data = response.data as Map<String, dynamic>;
+      final authResponse = AuthResponse.fromJson(data);
 
       // Save tokens and user data
       await _storage.saveTokens(authResponse.tokens);
@@ -64,7 +65,9 @@ class AuthService {
         throw Exception(response.message ?? 'Registration failed');
       }
 
-      final authResponse = AuthResponse.fromJson(response.data!);
+      // Server returns: { user: {...}, tokens: {...} }
+      final data = response.data as Map<String, dynamic>;
+      final authResponse = AuthResponse.fromJson(data);
 
       // Save tokens and user data
       await _storage.saveTokens(authResponse.tokens);
@@ -102,7 +105,9 @@ class AuthService {
       );
 
       if (response.success && response.data != null) {
-        final tokens = AuthTokens.fromJson(response.data!['tokens']);
+        // Server returns: { accessToken: "...", refreshToken: "..." }
+        final data = response.data as Map<String, dynamic>;
+        final tokens = AuthTokens.fromJson(data);
         await _storage.saveTokens(tokens);
         return true;
       }
