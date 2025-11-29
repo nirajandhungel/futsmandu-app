@@ -18,10 +18,49 @@ class AppConstants {
   static const String authLogout = '/auth/logout';
   static const String authRefreshToken = '/auth/refresh-token';
 
-  static const String courtsSearch = '/courts/public/futsal-courts/search';
+  // Court endpoints
+  static const String courtsSearchFutsal = '/courts/public/futsal-courts/search';
+  static const String courtsSearch = '/courts/public/courts/search';
   static const String futsalCourtsDetail = '/courts/public/futsal-courts';
+  static const String futsalCourtsWithCourts = '/courts/public/futsal-courts'; // /:id/courts
   static const String courtsDetail = '/courts/public/courts';
+  static const String courtAvailability = '/courts/public/courts'; // /:id/availability
   static const String ownerCourts = '/courts/owner/my-courts';
+  
+  // Booking endpoints
+  static const String bookings = '/bookings';
+  static const String myBookings = '/bookings/my';
+  static const String bookingJoin = '/bookings'; // /:id/join
+  static const String bookingLeave = '/bookings'; // /:id/leave
+  static const String bookingInvite = '/bookings'; // /:id/invite
+  static const String bookingCancel = '/bookings'; // /:id/cancel
+  
+  // Owner endpoints
+  static const String ownerActivate = '/owner/activate';
+  static const String ownerDeactivate = '/owner/deactivate';
+  static const String ownerProfile = '/owner/profile';
+  static const String ownerCourtsCreate = '/owner/courts';
+  static const String ownerDashboard = '/owner/dashboard';
+  static const String ownerBookingApprove = '/owner/bookings'; // /:id/approve
+  static const String ownerBookingReject = '/owner/bookings'; // /:id/reject
+  
+  // Admin endpoints
+  static const String adminDashboard = '/admin/dashboard/stats';
+  static const String adminOwnersPending = '/admin/owners/pending';
+  static const String adminOwnersApprove = '/admin/owners'; // /:ownerId/approve
+  static const String adminOwnersStatus = '/admin/owners'; // /:ownerId/status
+  static const String adminUsers = '/admin/users';
+  static const String adminUserById = '/admin/users'; // /:userId
+  static const String adminUserStatus = '/admin/users'; // /:userId/status
+  static const String adminFutsalCourts = '/admin/futsal-courts';
+  static const String adminFutsalCourtVerify = '/admin/futsal-courts'; // /:futsalCourtId/verify
+  static const String adminFutsalCourtSuspend = '/admin/futsal-courts'; // /:futsalCourtId/suspend
+  static const String adminFutsalCourtReactivate = '/admin/futsal-courts'; // /:futsalCourtId/reactivate
+  
+  // User endpoints
+  static const String userProfile = '/users/me';
+  static const String userUpdate = '/users/update';
+  static const String userChangePassword = '/users/change-password';
 
   // User Roles
   static const String rolePlayer = 'PLAYER';
@@ -63,6 +102,7 @@ class RouteNames {
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
   static const String ownerDashboard = '/owner-dashboard';
+  static const String adminDashboard = '/admin-dashboard';
   static const String myCourts = '/my-courts';
   static const String addCourt = '/add-court';
 }
