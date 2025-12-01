@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/court_provider.dart';
+import '../../providers/venue_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common/loading.dart';
-import '../../widgets/court/futsal_card.dart';
+import '../../widgets/court/venue_card.dart';
 
 class LalitpurFutsalScreen extends StatefulWidget {
   const LalitpurFutsalScreen({super.key});
@@ -28,7 +28,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLalitpurCourts();
+      _loadLalitpurVenues();
     });
 
     _scrollController.addListener(_onScroll);
@@ -45,14 +45,14 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreCourts();
+        _loadMoreVenues();
       }
     }
   }
 
-  Future<void> _loadLalitpurCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts(city: 'Lalitpur');
+  Future<void> _loadLalitpurVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.searchVenues(city: 'Lalitpur');
 
     setState(() {
       _currentPage = 1;
@@ -60,7 +60,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
     });
   }
 
-  Future<void> _loadMoreCourts() async {
+  Future<void> _loadMoreVenues() async {
     if (_isLoadingMore || !_hasMoreData) return;
 
     setState(() {
@@ -80,7 +80,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
       if (mounted) {
         Helpers.showSnackbar(
           context,
-          'Failed to load more courts',
+          'Failed to load more venues',
           isError: true,
         );
       }
@@ -93,9 +93,9 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
     }
   }
 
-  Future<void> _searchCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts(
+  Future<void> _searchVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.searchVenues(
       city: 'Lalitpur',
       name: _searchController.text.isNotEmpty ? _searchController.text : null,
     );
@@ -114,7 +114,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Futsal Courts in Lalitpur'),
+        title: const Text('Venues in Lalitpur'),
       ),
       body: Column(
         children: [
@@ -134,17 +134,17 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search futsal courts in Lalitpur...',
+              hintText: 'Search venues in Lalitpur...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
-                  _searchCourts();
+                  _searchVenues();
                 },
               ),
             ),
-            onSubmitted: (_) => _searchCourts(),
+            onSubmitted: (_) => _searchVenues(),
           ),
         ],
       ),
@@ -152,10 +152,10 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
   }
 
   Widget _buildBodyContent() {
-    return Consumer<CourtProvider>(
+    return Consumer<VenueProvider>(
       builder: (context, provider, _) {
         if (provider.isSearching && _currentPage == 1) {
-          return const LoadingWidget(message: 'Loading courts...');
+          return const LoadingWidget(message: 'Loading venues...');
         }
 
         if (provider.errorMessage != null && _currentPage == 1) {
@@ -174,7 +174,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
                 ElevatedButton(
                   onPressed: () {
                     provider.clearError();
-                    _loadLalitpurCourts();
+                    _loadLalitpurVenues();
                   },
                   child: const Text('Retry'),
                 ),
@@ -183,10 +183,10 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
           );
         }
 
-        if (provider.courts.isEmpty && _currentPage == 1) {
+        if (provider.venues.isEmpty && _currentPage == 1) {
           return const Center(
             child: Text(
-              'No futsal courts found in Lalitpur',
+              'No venues found in Lalitpur',
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.textSecondary,
@@ -196,18 +196,18 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: _loadLalitpurCourts,
+          onRefresh: _loadLalitpurVenues,
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(AppTheme.paddingM),
-            itemCount: provider.courts.length + (_hasMoreData ? 1 : 0),
+            itemCount: provider.venues.length + (_hasMoreData ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == provider.courts.length) {
+              if (index == provider.venues.length) {
                 return _buildLoadingMoreIndicator();
               }
 
-              return FutsalCard(
-                futsalCourt: provider.courts[index],
+              return VenueCard(
+                venue: provider.venues[index],
                 onTap: () {
                   Helpers.showSnackbar(
                     context,
@@ -228,7 +228,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
         padding: const EdgeInsets.all(16),
         child: Center(
           child: Text(
-            'No more courts in Lalitpur',
+            'No more venues in Lalitpur',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.textSecondary,
             ),
