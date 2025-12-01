@@ -124,7 +124,7 @@ class AppDrawer extends StatelessWidget {
       final ownerService = OwnerService();
 
       // Call deactivate owner mode API
-      final authResponse = await ownerService.deactivateOwnerMode();
+      final authResponse = await ownerService.activatePlayerMode();
 
       if (!context.mounted) return;
 
