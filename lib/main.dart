@@ -21,7 +21,8 @@ import 'screens/home/lalitpur_futsal.dart';
 import 'screens/dashboard/owner_dashboard.dart';
 import 'screens/dashboard/admin_dashboard.dart';
 import 'screens/owner/owner_registration_screen.dart';
-
+import 'widgets/court/venuedetail_screen.dart';
+import 'models/venue.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -122,6 +123,15 @@ class FutsmanduApp extends StatelessWidget {
                   path: RouteNames.adminDashboard,
                   builder: (context, state) => const AdminDashboard(),
                 ),
+                GoRoute(
+                  path: RouteNames.venueDetail,
+                  builder: (context, state) {
+                    final venue = state.extra as Venue;
+                    return VenueDetailScreen(venue: venue);
+                  },
+                ),
+
+
               ],
             ),
           );

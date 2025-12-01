@@ -8,6 +8,7 @@ import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../../widgets/common/loading.dart';
 import '../../widgets/court/venue_card.dart';
+import '../../widgets/court/venuedetail_screen.dart';
 import '../menu/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -368,11 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return VenueCard(
                 venue: provider.venues[index],
                 onTap: () {
-                  // Navigate to court detail screen when ready
-                  Helpers.showSnackbar(
-                    context,
-                    'Court detail coming soon!',
-                  );
+                  context.push(RouteNames.venueDetail, extra: provider.venues[index]);
                 },
               );
             },
