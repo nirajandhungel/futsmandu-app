@@ -89,17 +89,43 @@ class OwnerService {
     }
   }
 
+  // // Deactivate Owner Mode
+  // Future<AuthResponse> deactivateOwnerMode({String? reason}) async {
+  //   try {
+  //     final response = await _apiService.post<Map<String, dynamic>>(
+  //       AppConstants.ownerDeactivate,
+  //       data: reason != null ? {'reason': reason} : null,
+  //       fromJson: (json) => json as Map<String, dynamic>,
+  //     );
+
+  //     if (!response.success || response.data == null) {
+  //       throw Exception(response.message ?? 'Failed to deactivate owner mode');
+  //     }
+
+  //     // Server returns: { success: true, data: { user: {...}, tokens: {...} } }
+  //     final data = response.data as Map<String, dynamic>;
+  //     final authResponse = AuthResponse.fromJson(data);
+      
+  //     // Save tokens and user data
+  //     await _storage.saveTokens(authResponse.tokens);
+  //     await _storage.saveUser(authResponse.user);
+      
+  //     return authResponse;
+  //   } catch (e) {
+  //     throw Exception('Failed to deactivate owner mode: ${e.toString()}');
+  //   }
+  // }
   // Deactivate Owner Mode
-  Future<AuthResponse> deactivateOwnerMode({String? reason}) async {
+  Future<AuthResponse> activatePlayerMode({String? reason}) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        AppConstants.ownerDeactivate,
+        AppConstants.playerActivate,
         data: reason != null ? {'reason': reason} : null,
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
       if (!response.success || response.data == null) {
-        throw Exception(response.message ?? 'Failed to deactivate owner mode');
+        throw Exception(response.message ?? 'Failed to activate player mode');
       }
 
       // Server returns: { success: true, data: { user: {...}, tokens: {...} } }
@@ -112,7 +138,7 @@ class OwnerService {
       
       return authResponse;
     } catch (e) {
-      throw Exception('Failed to deactivate owner mode: ${e.toString()}');
+      throw Exception('Failed to activate player mode: ${e.toString()}');
     }
   }
 
