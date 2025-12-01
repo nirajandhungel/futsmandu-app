@@ -37,6 +37,7 @@ class AppConstants {
   // Owner endpoints
   static const String ownerActivate = '/owner/activate';
   static const String ownerDeactivate = '/owner/deactivate';
+  static const String playerActivate = '/owner/player-mode';
   static const String ownerProfile = '/owner/profile';
   static const String ownerVenuesCreate = '/owner/venues';
   static const String ownerDashboard = '/owner/dashboard';
