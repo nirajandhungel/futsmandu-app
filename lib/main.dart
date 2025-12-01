@@ -3,7 +3,7 @@ import 'package:futsmandu_flutter/screens/profile/edit_profile.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
-import 'providers/court_provider.dart';
+import 'providers/venue_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/api_service.dart';
@@ -40,7 +40,7 @@ class FutsmanduApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => CourtProvider()),
+        ChangeNotifierProvider(create: (_) => VenueProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
       ],
