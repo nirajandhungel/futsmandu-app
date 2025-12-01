@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:futsmandu_flutter/models/user.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,6 +23,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _isLoading = false;
+  bool _showStatusPage = false;
 
   // Form keys for each page
   final _page1FormKey = GlobalKey<FormState>();
@@ -29,10 +31,8 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   final _page3FormKey = GlobalKey<FormState>();
 
   // Page 1 - Basic Information
-
   final _panNumberController = TextEditingController();
   final _addressController = TextEditingController();
-
   final _phoneController = TextEditingController();
 
   // Page 2 - Additional KYC
@@ -49,12 +49,53 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   final ImagePicker _picker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    _checkOwnerStatus();
+  }
+
+  void _checkOwnerStatus() {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.user;
+
+    // Show status page if ownerStatus is not INACTIVE or null
+    if (user != null && user.ownerStatus != null && user.ownerStatus != 'INACTIVE') {
+      setState(() {
+        _showStatusPage = true;
+      });
+      _prefillForm(user);
+    }
+  }
+
+  void _prefillForm(User user) {
+// Check if user has ownerProfile (from your API response)
+  final ownerProfile = user.ownerProfile;
+  
+  if (ownerProfile != null) {
+    // Safe navigation with null checks
+    _panNumberController.text = ownerProfile.panNumber ?? '';
+    _addressController.text = ownerProfile.address ?? '';
+    _phoneController.text = user.phoneNumber ?? '';
+    
+    // Additional KYC data might be in different formats
+    final additionalKyc = ownerProfile.additionalKyc ?? {};
+    _ownerNameController.text = additionalKyc['ownerName'] ?? 
+                               additionalKyc['fullName'] ?? '';
+    _citizenshipNumberController.text = additionalKyc['citizenshipNumber'] ?? '';
+    _bankNameController.text = additionalKyc['bankName'] ?? '';
+    _bankAccountController.text = additionalKyc['bankAccount'] ?? 
+                                 additionalKyc['bankAccountNumber'] ?? '';
+  } else {
+    // If no ownerProfile, still pre-fill phone from user
+    _phoneController.text = user.phoneNumber ?? '';
+  }
+}
+
+  @override
   void dispose() {
     _pageController.dispose();
-
     _panNumberController.dispose();
     _addressController.dispose();
-
     _phoneController.dispose();
     _bankAccountController.dispose();
     _bankNameController.dispose();
@@ -206,6 +247,264 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.user;
+    
+    // Handle null user
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    
+    // Show status page if ownerStatus is PENDING/APPROVED/REJECTED
+    if (_showStatusPage) {
+      return _buildStatusPage(user);
+    }
+    
+    // Otherwise show the KYC form
+    return _buildKycForm();
+  }
+
+  // Status Page Widget
+  Widget _buildStatusPage(User user) {
+    final ownerProfile = user.ownerProfile;
+    final status = user.ownerStatus ?? 'INACTIVE';
+    
+    // Status configurations
+    final statusConfig = {
+      'PENDING': {
+        'title': 'KYC Under Review',
+        'message': 'Your owner verification is being reviewed by our team. This usually takes 1-2 business days.',
+        'icon': Icons.hourglass_top,
+        'color': const Color.fromARGB(255, 3, 105, 20),
+        'buttonText': 'View Details',
+      },
+      'APPROVED': {
+        'title': 'Owner Verified',
+        'message': 'Congratulations! Your owner account is verified. You can now create and manage futsal courts.',
+        'icon': Icons.verified,
+        'color': Colors.green,
+        'buttonText': 'Go to Dashboard',
+      },
+      'REJECTED': {
+        'title': 'KYC Rejected',
+        'message': 'Your KYC submission was rejected. Please review the remarks and submit again with correct documents.',
+        'icon': Icons.error_outline,
+        'color': Colors.red,
+        'buttonText': 'Re-submit KYC',
+      },
+      'INACTIVE': {
+        'title': 'Owner Mode Inactive',
+        'message': 'Owner mode is not active. Submit KYC to become a verified owner.',
+        'icon': Icons.person_outline,
+        'color': Colors.grey,
+        'buttonText': 'Activate Owner Mode',
+      },
+    };
+    
+    final config = statusConfig[status] ?? statusConfig['INACTIVE']!;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Owner Status'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppTheme.paddingL),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 40),
+            
+            // Status Icon
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: (config['color'] as Color).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                config['icon'] as IconData,
+                size: 60,
+                color: config['color'] as Color,
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Status Title
+            Text(
+              config['title'] as String,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: config['color'] as Color,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Status Message
+            Text(
+              config['message'] as String,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textSecondary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Submitted Info Card
+            if (ownerProfile != null) ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Submitted Information',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      _buildInfoRow('PAN Number', ownerProfile.panNumber),
+                      _buildInfoRow('Address', ownerProfile.address),
+                      if (ownerProfile.lastSubmittedAt != null)
+                        _buildInfoRow('Submitted On', 
+                          Helpers.formatDate(ownerProfile.lastSubmittedAt!)
+                        ),
+                      
+                      if (ownerProfile.additionalKyc != null) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoRow('Owner Name', 
+                          ownerProfile.additionalKyc!['ownerName'] ?? 
+                          ownerProfile.additionalKyc!['fullName'] ?? 'N/A'
+                        ),
+                        _buildInfoRow('Citizenship Number', 
+                          ownerProfile.additionalKyc!['citizenshipNumber'] ?? 'N/A'
+                        ),
+                        _buildInfoRow('Bank', 
+                          ownerProfile.additionalKyc!['bankName'] ?? 'N/A'
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            // Action Buttons
+            if (status == 'PENDING') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      text: 'View Dashboard',
+                      onPressed: () {
+                        // Navigate to owner dashboard
+                        // context.go('/owner/dashboard');
+                      },
+                      isOutlined: true,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppButton(
+                      text: 'Contact Support',
+                      onPressed: () {
+                        // Open support
+                        // Helpers.launchUrl('mailto:support@futsmandu.com');
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (status == 'REJECTED') ...[
+              AppButton(
+                text: 'Re-submit KYC',
+                onPressed: () {
+                  setState(() {
+                    _showStatusPage = false; // Show form for re-submission
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                text: 'Contact Support',
+                onPressed: () {
+                  // Helpers.launchUrl('mailto:support@futsmandu.com');
+                },
+                isOutlined: true,
+              ),
+            ] else if (status == 'APPROVED') ...[
+              AppButton(
+                text: 'Go to Dashboard',
+                onPressed: () {
+                  // context.go('/owner/dashboard');
+                },
+              ),
+            ] else if (status == 'INACTIVE') ...[
+              AppButton(
+                text: 'Start KYC Verification',
+                onPressed: () {
+                  setState(() {
+                    _showStatusPage = false; // Show KYC form
+                  });
+                },
+              ),
+            ],
+            
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String? value) { // Change to String?
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            '$label:',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value ?? 'N/A', // Handle null value
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  // KYC Form Widgets (existing code)
+  Widget _buildKycForm() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Owner KYC Verification'),
@@ -485,23 +784,23 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                 height: 80,
                 decoration: BoxDecoration(
                   color: file != null
-                      ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                      ? AppTheme.primaryColor.withOpacity(0.1)
                       : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: file != null
                     ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    file,
-                    fit: BoxFit.cover,
-                  ),
-                )
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          file,
+                          fit: BoxFit.cover,
+                        ),
+                      )
                     : Icon(
-                  icon,
-                  size: 40,
-                  color: Colors.grey.shade400,
-                ),
+                        icon,
+                        size: 40,
+                        color: Colors.grey.shade400,
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -516,8 +815,8 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                     Text(
                       file != null ? 'Tap to change' : subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
+                            color: AppTheme.textSecondary,
+                          ),
                     ),
                   ],
                 ),
