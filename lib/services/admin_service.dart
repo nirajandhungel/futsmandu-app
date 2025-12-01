@@ -1,4 +1,4 @@
-import '../models/futsal_court.dart';
+import '../models/venue.dart';
 import '../models/user.dart';
 import '../utils/constants.dart';
 import 'api_service.dart';
@@ -219,8 +219,8 @@ class AdminService {
     }
   }
 
-  // Get All Futsal Courts
-  Future<List<FutsalCourt>> getAllFutsalCourts({
+  // Get All Venues
+  Future<List<Venue>> getAllVenues({
     int? page,
     int? limit,
     bool? isVerified,
@@ -238,7 +238,7 @@ class AdminService {
       if (sort != null) queryParams['sort'] = sort;
 
       final response = await _apiService.get<List<dynamic>>(
-        AppConstants.adminFutsalCourts,
+        AppConstants.adminVenues,
         queryParameters: queryParams,
         fromJson: (json) => json as List<dynamic>,
       );
@@ -248,18 +248,18 @@ class AdminService {
       }
 
       return response.data!
-          .map((item) => FutsalCourt.fromJson(item as Map<String, dynamic>))
+          .map((item) => Venue.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      throw Exception('Failed to get futsal courts: ${e.toString()}');
+      throw Exception('Failed to get venues: ${e.toString()}');
     }
   }
 
-  // Verify Futsal Court
-  Future<FutsalCourt> verifyFutsalCourt(String futsalCourtId) async {
+  // Verify Venue
+  Future<Venue> verifyVenue(String venueId) async {
     try {
       final response = await _apiService.patch<Map<String, dynamic>>(
-        '${AppConstants.adminFutsalCourtVerify}/$futsalCourtId/verify',
+        '${AppConstants.adminVenueVerify}/$venueId/verify',
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -268,23 +268,23 @@ class AdminService {
       }
 
       final data = response.data as Map<String, dynamic>;
-      final futsalCourt = data['futsalCourt'] as Map<String, dynamic>?;
+      final venue = data['venue'] as Map<String, dynamic>?;
       
-      if (futsalCourt == null) {
-        throw Exception('Futsal court data not found in response');
+      if (venue == null) {
+        throw Exception('Venue data not found in response');
       }
 
-      return FutsalCourt.fromJson(futsalCourt);
+      return Venue.fromJson(venue);
     } catch (e) {
-      throw Exception('Failed to verify futsal court: ${e.toString()}');
+      throw Exception('Failed to verify venue: ${e.toString()}');
     }
   }
 
-  // Suspend Futsal Court
-  Future<FutsalCourt> suspendFutsalCourt(String futsalCourtId) async {
+  // Suspend Venue
+  Future<Venue> suspendVenue(String venueId) async {
     try {
       final response = await _apiService.patch<Map<String, dynamic>>(
-        '${AppConstants.adminFutsalCourtSuspend}/$futsalCourtId/suspend',
+        '${AppConstants.adminVenueSuspend}/$venueId/suspend',
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -293,23 +293,23 @@ class AdminService {
       }
 
       final data = response.data as Map<String, dynamic>;
-      final futsalCourt = data['futsalCourt'] as Map<String, dynamic>?;
+      final venue = data['venue'] as Map<String, dynamic>?;
       
-      if (futsalCourt == null) {
-        throw Exception('Futsal court data not found in response');
+      if (venue == null) {
+        throw Exception('Venue data not found in response');
       }
 
-      return FutsalCourt.fromJson(futsalCourt);
+      return Venue.fromJson(venue);
     } catch (e) {
-      throw Exception('Failed to suspend futsal court: ${e.toString()}');
+      throw Exception('Failed to suspend venue: ${e.toString()}');
     }
   }
 
-  // Reactivate Futsal Court
-  Future<FutsalCourt> reactivateFutsalCourt(String futsalCourtId) async {
+  // Reactivate Venue
+  Future<Venue> reactivateVenue(String venueId) async {
     try {
       final response = await _apiService.patch<Map<String, dynamic>>(
-        '${AppConstants.adminFutsalCourtReactivate}/$futsalCourtId/reactivate',
+        '${AppConstants.adminVenueReactivate}/$venueId/reactivate',
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -318,15 +318,15 @@ class AdminService {
       }
 
       final data = response.data as Map<String, dynamic>;
-      final futsalCourt = data['futsalCourt'] as Map<String, dynamic>?;
+      final venue = data['venue'] as Map<String, dynamic>?;
       
-      if (futsalCourt == null) {
-        throw Exception('Futsal court data not found in response');
+      if (venue == null) {
+        throw Exception('Venue data not found in response');
       }
 
-      return FutsalCourt.fromJson(futsalCourt);
+      return Venue.fromJson(venue);
     } catch (e) {
-      throw Exception('Failed to reactivate futsal court: ${e.toString()}');
+      throw Exception('Failed to reactivate venue: ${e.toString()}');
     }
   }
 }
