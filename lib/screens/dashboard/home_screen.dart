@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/court_provider.dart';
+import '../../providers/venue_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../../widgets/common/loading.dart';
-import '../../widgets/court/futsal_card.dart';
+import '../../widgets/court/venue_card.dart';
 import '../menu/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCourts();
+      _loadVenues();
     });
 
     // Add scroll listener for infinite scrolling
@@ -52,14 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       // Load more when user is 200px from bottom
       if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreCourts();
+        _loadMoreVenues();
       }
     }
   }
 
-  Future<void> _loadCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.getFutsalCourtDetails();
+  Future<void> _loadVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.getAllVenues(
+
+    );
 
     if (!mounted) return;  // <-- IMPORTANT
 
@@ -68,8 +70,22 @@ class _HomeScreenState extends State<HomeScreen> {
       _hasMoreData = true;
     });
   }
+  // Future<void> _loadVenues() async {
+  //   final venueProvider = context.read<VenueProvider>();
+  //   await venueProvider.searchVenues(
+  //     city: _searchCity.isNotEmpty ? _searchCity : null,
+  //     name: _searchController.text.isNotEmpty ? _searchController.text : null,
+  //   );
 
-  Future<void> _loadMoreCourts() async {
+  //   if (!mounted) return;  // <-- IMPORTANT
+
+  //   setState(() {
+  //     _currentPage = 1;
+  //     _hasMoreData = true;
+  //   });
+  // }
+
+  Future<void> _loadMoreVenues() async {
     if (!mounted) return;
     setState(() {
       _isLoadingMore = true;
@@ -78,10 +94,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       // Remove unused variable
-      // final courtProvider = context.read<CourtProvider>();
+      // final venueProvider = context.read<VenueProvider>();
 
       // TODO: When you have real API with pagination, call it like this:
-      // await courtProvider.searchCourts(
+      // await venueProvider.searchVenues(
       //   city: _searchCity.isNotEmpty ? _searchCity : null,
       //   name: _searchController.text.isNotEmpty ? _searchController.text : null,
       //   page: _currentPage + 1,
@@ -102,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         Helpers.showSnackbar(
           context,
-          'Failed to load more courts',
+          'Failed to load more venues',
           isError: true,
         );
       }
@@ -115,9 +131,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _searchCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts(
+  Future<void> _searchVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.searchVenues(
       city: _searchCity.isNotEmpty ? _searchCity : null,
       name: _searchController.text.isNotEmpty ? _searchController.text : null,
     );
@@ -224,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() {
               _searchCity = value;
             });
-            _searchCourts();
+            _searchVenues();
           }
         },
         // FIXED: Replace withOpacity with Color.fromRGBO
@@ -254,11 +270,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
-                  _searchCourts();
+                  _searchVenues();
                 },
               ),
             ),
-            onSubmitted: (_) => _searchCourts(),
+            onSubmitted: (_) => _searchVenues(),
           ),
           const SizedBox(height: 16),
           Row(
@@ -286,10 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBodyContent() {
-    return Consumer<CourtProvider>(
+    return Consumer<VenueProvider>(
       builder: (context, provider, _) {
         if (provider.isSearching && _currentPage == 1) {
-          return const LoadingWidget(message: 'Loading courts...');
+          return const LoadingWidget(message: 'Loading venues...');
         }
 
         if (provider.errorMessage != null && _currentPage == 1) {
@@ -308,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ElevatedButton(
                   onPressed: () {
                     provider.clearError();
-                    _loadCourts();
+                    _loadVenues();
                   },
                   child: const Text('Retry'),
                 ),
@@ -317,10 +333,10 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        if (provider.courts.isEmpty && _currentPage == 1) {
+        if (provider.venues.isEmpty && _currentPage == 1) {
           return const Center(
             child: Text(
-              'No futsal courts found',
+              'No venues found',
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.textSecondary,
@@ -330,19 +346,19 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: _loadCourts,
+          onRefresh: _loadVenues,
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(AppTheme.paddingM),
-            itemCount: provider.courts.length + (_hasMoreData ? 1 : 0),
+            itemCount: provider.venues.length + (_hasMoreData ? 1 : 0),
             itemBuilder: (context, index) {
               // Show loading indicator at the bottom
-              if (index == provider.courts.length) {
+              if (index == provider.venues.length) {
                 return _buildLoadingMoreIndicator();
               }
 
-              return FutsalCard(
-                futsalCourt: provider.courts[index],
+              return VenueCard(
+                venue: provider.venues[index],
                 onTap: () {
                   // Navigate to court detail screen when ready
                   Helpers.showSnackbar(
@@ -365,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16),
         child: Center(
           child: Text(
-            'No more courts to load',
+            'No more venues to load',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.textSecondary,
             ),
