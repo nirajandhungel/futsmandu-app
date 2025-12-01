@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import '../models/futsal_court.dart';
+import '../models/venue.dart';
 import '../models/user.dart';
 import '../utils/constants.dart';
 import 'api_service.dart';
@@ -134,8 +134,8 @@ class OwnerService {
     }
   }
 
-  // Create Futsal Court
-  Future<FutsalCourt> createFutsalCourt({
+  // Create Venue
+  Future<Venue> createVenue({
     required String name,
     required String address,
     required String city,
@@ -149,7 +149,7 @@ class OwnerService {
   }) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        AppConstants.ownerCourtsCreate,
+        AppConstants.ownerVenuesCreate,
         data: {
           'name': name,
           'address': address,
@@ -165,20 +165,20 @@ class OwnerService {
       );
 
       if (!response.success || response.data == null) {
-        throw Exception(response.message ?? 'Failed to create futsal court');
+        throw Exception(response.message ?? 'Failed to create venue');
       }
 
-      // Server returns: { futsalCourt: {...} }
+      // Server returns: { venue: {...} }
       final data = response.data as Map<String, dynamic>;
-      final futsalCourt = data['futsalCourt'] as Map<String, dynamic>?;
+      final venue = data['venue'] as Map<String, dynamic>?;
       
-      if (futsalCourt == null) {
-        throw Exception('Futsal court data not found in response');
+      if (venue == null) {
+        throw Exception('Venue data not found in response');
       }
 
-      return FutsalCourt.fromJson(futsalCourt);
+      return Venue.fromJson(venue);
     } catch (e) {
-      throw Exception('Failed to create futsal court: ${e.toString()}');
+      throw Exception('Failed to create venue: ${e.toString()}');
     }
   }
 
