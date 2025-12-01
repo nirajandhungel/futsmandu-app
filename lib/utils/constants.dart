@@ -18,14 +18,13 @@ class AppConstants {
   static const String authLogout = '/auth/logout';
   static const String authRefreshToken = '/auth/refresh-token';
 
-  // Court endpoints
-  static const String futsalCourtsDetail = '/courts/public/venues';
-  static const String courtsSearchFutsal = '/courts/public/venues/search';
+  // Venue & Court endpoints
+  static const String venuesDetail = '/courts/public/venues';
+  static const String venuesSearch = '/courts/public/venues/search';
   static const String courtsSearch = '/courts/public/courts/search';
-  // static const String futsalCourtsWithCourts = '/courts/public/venues'; // /:id/courts
   static const String courtsDetail = '/courts/public/courts';
   static const String courtAvailability = '/courts/public/courts/id/availability'; // /:id/availability
-  static const String ownerCourts = '/courts/owner/my-courts';
+  static const String ownerVenues = '/courts/owner/my-venues';
   
   // Booking endpoints
   static const String bookings = '/bookings';
@@ -39,7 +38,7 @@ class AppConstants {
   static const String ownerActivate = '/owner/activate';
   static const String ownerDeactivate = '/owner/deactivate';
   static const String ownerProfile = '/owner/profile';
-  static const String ownerCourtsCreate = '/owner/courts';
+  static const String ownerVenuesCreate = '/owner/venues';
   static const String ownerDashboard = '/owner/dashboard';
   static const String ownerBookingApprove = '/owner/bookings'; // /:id/approve
   static const String ownerBookingReject = '/owner/bookings'; // /:id/reject
@@ -52,10 +51,10 @@ class AppConstants {
   static const String adminUsers = '/admin/users';
   static const String adminUserById = '/admin/users'; // /:userId
   static const String adminUserStatus = '/admin/users'; // /:userId/status
-  static const String adminFutsalCourts = '/admin/venues';
-  static const String adminFutsalCourtVerify = '/admin/venues'; // /:futsalCourtId/verify
-  static const String adminFutsalCourtSuspend = '/admin/venues'; // /:futsalCourtId/suspend
-  static const String adminFutsalCourtReactivate = '/admin/venues'; // /:futsalCourtId/reactivate
+  static const String adminVenues = '/admin/venues';
+  static const String adminVenueVerify = '/admin/venues'; // /:venueId/verify
+  static const String adminVenueSuspend = '/admin/venues'; // /:venueId/suspend
+  static const String adminVenueReactivate = '/admin/venues'; // /:venueId/reactivate
   
   // User endpoints
   static const String userProfile = '/users/me';
