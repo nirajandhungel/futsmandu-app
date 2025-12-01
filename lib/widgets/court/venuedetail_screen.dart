@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/venue.dart';
 import '../../utils/theme.dart';
-
-// HOW TO USE:
-// In your VenueCard's onTap or wherever you're handling venue clicks:
-//
-// Navigator.push(
-//   context,
-//   MaterialPageRoute(
-//     builder: (context) => VenueDetailScreen(venue: venue),
-//   ),
-// );
+import 'bookscreen_ui.dart'; // Add this import
 
 class VenueDetailScreen extends StatelessWidget {
   final Venue venue;
@@ -225,15 +216,13 @@ class VenueDetailScreen extends StatelessWidget {
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      if (court.size != null) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          court.size!,
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: AppTheme.textSecondary,
-                                          ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        court.size,
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppTheme.textSecondary,
                                         ),
-                                      ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -334,11 +323,11 @@ class VenueDetailScreen extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: Navigate to booking screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Booking feature coming soon!'),
-                    duration: Duration(seconds: 2),
+                // Navigate to booking screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookingScreen(venue: venue),
                   ),
                 );
               },

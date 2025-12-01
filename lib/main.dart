@@ -14,7 +14,6 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
-// import 'screens/profile/edit_profile.dart';
 import 'screens/home/bhaktapur_futsal.dart';
 import 'screens/home/kathmandu_futsal.dart';
 import 'screens/home/lalitpur_futsal.dart';
@@ -22,7 +21,9 @@ import 'screens/dashboard/owner_dashboard.dart';
 import 'screens/dashboard/admin_dashboard.dart';
 import 'screens/owner/owner_registration_screen.dart';
 import 'widgets/court/venuedetail_screen.dart';
+import 'widgets/court/bookscreen_ui.dart';
 import 'models/venue.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -114,9 +115,8 @@ class FutsmanduApp extends StatelessWidget {
                   path: RouteNames.ownerDashboard,
                   builder: (context, state) => const OwnerDashboardScreen(),
                 ),
-
                 GoRoute(
-                  path: RouteNames.OwnerKycScreen ,
+                  path: RouteNames.OwnerKycScreen,
                   builder: (context, state) => const OwnerKycScreen(),
                 ),
                 GoRoute(
@@ -130,8 +130,14 @@ class FutsmanduApp extends StatelessWidget {
                     return VenueDetailScreen(venue: venue);
                   },
                 ),
-
-
+                // Add the booking route
+                GoRoute(
+                  path: RouteNames.booking,
+                  builder: (context, state) {
+                    final venue = state.extra as Venue;
+                    return BookingScreen(venue: venue);
+                  },
+                ),
               ],
             ),
           );

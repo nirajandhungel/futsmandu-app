@@ -25,7 +25,7 @@ class AppConstants {
   static const String courtsDetail = '/courts/public/courts';
   static const String courtAvailability = '/courts/public/courts/id/availability'; // /:id/availability
   static const String ownerVenues = '/courts/owner/my-venues';
-  
+
   // Booking endpoints
   static const String bookings = '/bookings';
   static const String myBookings = '/bookings/my';
@@ -33,7 +33,7 @@ class AppConstants {
   static const String bookingLeave = '/bookings'; // /:id/leave
   static const String bookingInvite = '/bookings'; // /:id/invite
   static const String bookingCancel = '/bookings'; // /:id/cancel
-  
+
   // Owner endpoints
   static const String ownerActivate = '/owner/activate';
   static const String ownerDeactivate = '/owner/deactivate';
@@ -43,7 +43,7 @@ class AppConstants {
   static const String ownerDashboard = '/owner/dashboard';
   static const String ownerBookingApprove = '/owner/bookings'; // /:id/approve
   static const String ownerBookingReject = '/owner/bookings'; // /:id/reject
-  
+
   // Admin endpoints
   static const String adminDashboard = '/admin/dashboard/stats';
   static const String adminOwnersPending = '/admin/owners/pending';
@@ -56,7 +56,7 @@ class AppConstants {
   static const String adminVenueVerify = '/admin/venues'; // /:venueId/verify
   static const String adminVenueSuspend = '/admin/venues'; // /:venueId/suspend
   static const String adminVenueReactivate = '/admin/venues'; // /:venueId/reactivate
-  
+
   // User endpoints
   static const String userProfile = '/users/me';
   static const String userUpdate = '/users/update';
@@ -96,7 +96,7 @@ class RouteNames {
   static const String home = '/home';
   static const String search = '/search';
   static const String courtDetail = '/court-detail';
-  static const String booking = '/booking';
+  static const String booking = '/booking';  // You already have this
   static const String bookingHistory = '/booking-history';
   static const String bookingConfirmation = '/booking-confirmation';
   static const String profile = '/profile';

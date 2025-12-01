@@ -16,27 +16,14 @@ class VenueService {
     // Fix double-nested amenities
     List<String>? amenities;
     if (json['amenities'] != null) {
-      try {
-        final rawAmenities = json['amenities'];
-
-        if (rawAmenities is List && rawAmenities.isNotEmpty) {
-          // Check if first element is also a list (double-nested)
-          if (rawAmenities[0] is List) {
-            // Double-nested: [["Parking", "WiFi"]] -> ["Parking", "WiFi"]
-            amenities = (rawAmenities[0] as List)
-                .map((item) => item.toString())
-                .toList();
-            print('🔧 Fixed double-nested amenities: $amenities');
-          } else {
-            // Already flat: ["Parking", "WiFi"]
-            amenities = rawAmenities
-                .map((item) => item.toString())
-                .toList();
-          }
+      if (json['amenities'] is List && json['amenities'].isNotEmpty) {
+        if (json['amenities'][0] is List) {
+          // Double-nested, unwrap it
+          amenities = List<String>.from(json['amenities'][0]);
+        } else {
+          // Already flat
+          amenities = List<String>.from(json['amenities']);
         }
-      } catch (e) {
-        print('⚠️ Error parsing amenities: $e');
-        amenities = null;
       }
     }
 
