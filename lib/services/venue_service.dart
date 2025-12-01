@@ -6,6 +6,48 @@ import 'api_service.dart';
 class VenueService {
   final ApiService _apiService = ApiService();
 
+  // Helper method to transform API response to match Venue model
+  Map<String, dynamic> _transformVenueJson(Map<String, dynamic> json) {
+    // Extract nested location data
+    final location = json['location'] ?? {};
+    final coordinates = location['coordinates'] ?? {};
+    final contact = json['contact'] ?? {};
+
+    // Fix double-nested amenities
+    List<String>? amenities;
+    if (json['amenities'] != null) {
+      if (json['amenities'] is List && json['amenities'].isNotEmpty) {
+        if (json['amenities'][0] is List) {
+          // Double-nested, unwrap it
+          amenities = List<String>.from(json['amenities'][0]);
+        } else {
+          // Already flat
+          amenities = List<String>.from(json['amenities']);
+        }
+      }
+    }
+
+    return {
+      'id': json['id'] ?? json['_id'] ?? '',
+      'name': json['name'] ?? '',
+      'address': location['address'] ?? '',
+      'city': location['city'] ?? '',
+      'description': json['description'],
+      'phoneNumber': contact['phone'],
+      'email': contact['email'],
+      'latitude': coordinates['latitude']?.toDouble(),
+      'longitude': coordinates['longitude']?.toDouble(),
+      'rating': json['rating']?.toDouble(),
+      'totalReviews': json['totalReviews'],
+      'isActive': json['isActive'] ?? true,
+      'ownerId': json['ownerId'] ?? '',
+      'amenities': amenities,
+      'images': json['images'] != null ? List<String>.from(json['images']) : null,
+      'courts': json['courts'],
+      'createdAt': json['createdAt'],
+    };
+  }
+
   // Search Venues
   Future<List<Venue>> searchVenues({
     String? city,
@@ -13,33 +55,88 @@ class VenueService {
     int page = 1,
     int limit = 10,
   }) async {
-    final response = await _apiService.get(
-      AppConstants.venuesSearch,
-      queryParameters: {
-        "city": city,
-        "name": name,
-        "page": page.toString(),
-        "limit": limit.toString(),
-      },
-    );
+    try {
+      final response = await _apiService.get(
+        AppConstants.venuesSearch,
+        queryParameters: {
+          "city": city,
+          "name": name,
+          "page": page.toString(),
+          "limit": limit.toString(),
+        },
+      );
 
-    return (response.data['venues'] as List)
-        .map((v) => Venue.fromJson(v))
-        .toList();
+      print('📥 Search Response: ${response.data}');
+
+      // Handle nested data structure
+      final data = response.data;
+      List<dynamic> venuesList;
+
+      if (data is Map) {
+        // Check if venues are nested inside 'data'
+        if (data.containsKey('data') && data['data'] is Map) {
+          venuesList = (data['data']['venues'] as List?) ?? [];
+        } else if (data.containsKey('venues')) {
+          venuesList = (data['venues'] as List?) ?? [];
+        } else {
+          venuesList = [];
+        }
+      } else {
+        venuesList = [];
+      }
+
+      print('📊 Found ${venuesList.length} venues');
+
+      return venuesList.map((v) {
+        final transformedJson = _transformVenueJson(v as Map<String, dynamic>);
+        return Venue.fromJson(transformedJson);
+      }).toList();
+    } catch (e) {
+      print('❌ Error in searchVenues: $e');
+      throw Exception('Failed to search venues: $e');
+    }
   }
 
-  //  get all Venues
+  // Get all Venues
   Future<List<Venue>> getVenues({
     int page = 1,
     int limit = 10,
   }) async {
-    final response = await _apiService.get(
-      AppConstants.venuesDetail,
-    );
+    try {
+      final response = await _apiService.get(
+        AppConstants.venuesDetail,
+      );
 
-    return (response.data['venues'] as List)
-        .map((v) => Venue.fromJson(v))
-        .toList();
+      print('📥 Get Venues Response: ${response.data}');
+
+      // Handle nested data structure
+      final data = response.data;
+      List<dynamic> venuesList;
+
+      if (data is Map) {
+        // Check if venues are nested inside 'data'
+        if (data.containsKey('data') && data['data'] is Map) {
+          venuesList = (data['data']['venues'] as List?) ?? [];
+        } else if (data.containsKey('venues')) {
+          venuesList = (data['venues'] as List?) ?? [];
+        } else {
+          venuesList = [];
+        }
+      } else {
+        venuesList = [];
+      }
+
+      print('📊 Found ${venuesList.length} venues');
+
+      return venuesList.map((v) {
+        final transformedJson = _transformVenueJson(v as Map<String, dynamic>);
+        print('🔄 Transformed: ${transformedJson['name']}');
+        return Venue.fromJson(transformedJson);
+      }).toList();
+    } catch (e) {
+      print('❌ Error in getVenues: $e');
+      throw Exception('Failed to get venues: $e');
+    }
   }
 
   // Get Venue Details
@@ -51,20 +148,27 @@ class VenueService {
       );
 
       if (!response.success || response.data == null) {
-        throw Exception(response.message ?? 'Failed to get court details');
+        throw Exception(response.message ?? 'Failed to get venue details');
       }
 
-      // Server returns: { venue: {...} }
+      // Server returns: { venue: {...} } or { data: { venue: {...} } }
       final data = response.data as Map<String, dynamic>;
-      final venue = data['venue'] as Map<String, dynamic>?;
-      
-      if (venue == null) {
+      Map<String, dynamic>? venueJson;
+
+      if (data.containsKey('data') && data['data'] is Map) {
+        venueJson = data['data']['venue'] as Map<String, dynamic>?;
+      } else if (data.containsKey('venue')) {
+        venueJson = data['venue'] as Map<String, dynamic>?;
+      }
+
+      if (venueJson == null) {
         throw Exception('Venue data not found in response');
       }
 
-      return Venue.fromJson(venue);
+      final transformedJson = _transformVenueJson(venueJson);
+      return Venue.fromJson(transformedJson);
     } catch (e) {
-      throw Exception('Failed to get court details: ${e.toString()}');
+      throw Exception('Failed to get venue details: ${e.toString()}');
     }
   }
 
@@ -83,7 +187,7 @@ class VenueService {
       // Server returns: { court: {...} }
       final data = response.data as Map<String, dynamic>;
       final court = data['court'] as Map<String, dynamic>?;
-      
+
       if (court == null) {
         throw Exception('Court data not found in response');
       }
@@ -134,17 +238,22 @@ class VenueService {
 
       // Server returns: { venues: [...], courts: [...] } or similar structure
       final data = response.data as Map<String, dynamic>;
-      final venuesList = data['venues'] as List<dynamic>?;
-      
-      if (venuesList == null) {
-        return [];
+      List<dynamic> venuesList;
+
+      if (data.containsKey('data') && data['data'] is Map) {
+        venuesList = (data['data']['venues'] as List?) ?? [];
+      } else if (data.containsKey('venues')) {
+        venuesList = (data['venues'] as List?) ?? [];
+      } else {
+        venuesList = [];
       }
 
-      return venuesList
-          .map((item) => Venue.fromJson(item as Map<String, dynamic>))
-          .toList();
+      return venuesList.map((item) {
+        final transformedJson = _transformVenueJson(item as Map<String, dynamic>);
+        return Venue.fromJson(transformedJson);
+      }).toList();
     } catch (e) {
-      throw Exception('Failed to get owner courts: ${e.toString()}');
+      throw Exception('Failed to get owner venues: ${e.toString()}');
     }
   }
 
@@ -179,7 +288,7 @@ class VenueService {
       // Server returns: { court: {...} }
       final data = response.data as Map<String, dynamic>;
       final court = data['court'] as Map<String, dynamic>?;
-      
+
       if (court == null) {
         throw Exception('Court data not found in response');
       }
@@ -205,7 +314,7 @@ class VenueService {
       // Server returns: { venue: {...}, courts: [...] }
       final data = response.data as Map<String, dynamic>;
       final courtsList = data['courts'] as List<dynamic>?;
-      
+
       if (courtsList == null) {
         return [];
       }

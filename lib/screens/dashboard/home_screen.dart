@@ -20,13 +20,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  String _searchCity = '';
+  String _searchCity = ''; // Empty means "All"
 
   // Pagination variables
   int _currentPage = 1;
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
-
 
   @override
   void initState() {
@@ -59,31 +58,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadVenues() async {
     final venueProvider = context.read<VenueProvider>();
-    await venueProvider.getAllVenues(
 
-    );
+    // If no city is selected (All), fetch all venues
+    if (_searchCity.isEmpty && _searchController.text.isEmpty) {
+      await venueProvider.getAllVenues();
+    } else {
+      // Otherwise, search with filters
+      await venueProvider.searchVenues(
+        city: _searchCity.isNotEmpty ? _searchCity : null,
+        name: _searchController.text.isNotEmpty ? _searchController.text : null,
+      );
+    }
 
-    if (!mounted) return;  // <-- IMPORTANT
+    if (!mounted) return;
 
     setState(() {
       _currentPage = 1;
       _hasMoreData = true;
     });
   }
-  // Future<void> _loadVenues() async {
-  //   final venueProvider = context.read<VenueProvider>();
-  //   await venueProvider.searchVenues(
-  //     city: _searchCity.isNotEmpty ? _searchCity : null,
-  //     name: _searchController.text.isNotEmpty ? _searchController.text : null,
-  //   );
-
-  //   if (!mounted) return;  // <-- IMPORTANT
-
-  //   setState(() {
-  //     _currentPage = 1;
-  //     _hasMoreData = true;
-  //   });
-  // }
 
   Future<void> _loadMoreVenues() async {
     if (!mounted) return;
@@ -91,22 +84,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingMore = true;
     });
 
-
     try {
-      // Remove unused variable
-      // final venueProvider = context.read<VenueProvider>();
-
       // TODO: When you have real API with pagination, call it like this:
-      // await venueProvider.searchVenues(
-      //   city: _searchCity.isNotEmpty ? _searchCity : null,
-      //   name: _searchController.text.isNotEmpty ? _searchController.text : null,
-      //   page: _currentPage + 1,
-      // );
+      // final venueProvider = context.read<VenueProvider>();
+      // if (_searchCity.isEmpty && _searchController.text.isEmpty) {
+      //   await venueProvider.getAllVenues(page: _currentPage + 1);
+      // } else {
+      //   await venueProvider.searchVenues(
+      //     city: _searchCity.isNotEmpty ? _searchCity : null,
+      //     name: _searchController.text.isNotEmpty ? _searchController.text : null,
+      //     page: _currentPage + 1,
+      //   );
+      // }
 
       // Simulate API call delay for now
       await Future.delayed(const Duration(seconds: 1));
 
-      if (!mounted) return;    // <-- ADD THIS
+      if (!mounted) return;
 
       setState(() {
         _currentPage++;
@@ -132,19 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _searchVenues() async {
-    final venueProvider = context.read<VenueProvider>();
-    await venueProvider.searchVenues(
-      city: _searchCity.isNotEmpty ? _searchCity : null,
-      name: _searchController.text.isNotEmpty ? _searchController.text : null,
-    );
-
-    if (!mounted) return;  // <-- ADD THIS
-
-    setState(() {
-      _currentPage = 1;
-      _hasMoreData = true;
-    });
-
+    await _loadVenues(); // Reuse the same logic
   }
 
   @override
@@ -213,7 +195,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // FIXED: Removed duplicate method and fixed the single implementation
   Widget _buildCityChip(String label, String value) {
     final isSelected = _searchCity == value;
     return Padding(
@@ -222,28 +203,11 @@ class _HomeScreenState extends State<HomeScreen> {
         label: Text(label),
         selected: isSelected,
         onSelected: (selected) {
-          if (value.isNotEmpty) {
-            // Navigate to city-specific screen
-            switch (value) {
-              case 'Kathmandu':
-                context.push('/kathmandu-futsal');
-                break;
-              case 'Bhaktapur':
-                context.push('/bhaktapur-futsal');
-                break;
-              case 'Lalitpur':
-                context.push('/lalitpur-futsal');
-                break;
-            }
-          } else {
-            // Stay in home screen (All)
-            setState(() {
-              _searchCity = value;
-            });
-            _searchVenues();
-          }
+          setState(() {
+            _searchCity = value; // Set the selected city (empty for "All")
+          });
+          _searchVenues(); // Fetch venues based on the selected city
         },
-        // FIXED: Replace withOpacity with Color.fromRGBO
         selectedColor: Color.fromRGBO(
           AppTheme.primaryColor.red,
           AppTheme.primaryColor.green,
@@ -254,7 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // FIXED: Added missing _buildSearchHeader method
   Widget _buildSearchHeader() {
     return Container(
       padding: const EdgeInsets.all(AppTheme.paddingM),
@@ -264,22 +227,33 @@ class _HomeScreenState extends State<HomeScreen> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search',
+              hintText: 'Search venues by name',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
                   _searchVenues();
                 },
-              ),
+              )
+                  : null,
             ),
             onSubmitted: (_) => _searchVenues(),
+            onChanged: (_) {
+              setState(() {}); // Update UI to show/hide clear button
+            },
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text('City: '),
+              const Text(
+                'City: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: SingleChildScrollView(
@@ -313,8 +287,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppTheme.errorColor,
+                ),
+                const SizedBox(height: 16),
                 Text(
                   provider.errorMessage!,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
                     color: AppTheme.textSecondary,
@@ -334,13 +315,40 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         if (provider.venues.isEmpty && _currentPage == 1) {
-          return const Center(
-            child: Text(
-              'No venues found',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppTheme.textSecondary,
-              ),
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_off,
+                  size: 64,
+                  color: AppTheme.textSecondary.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _searchCity.isEmpty && _searchController.text.isEmpty
+                      ? 'No venues available'
+                      : 'No venues found matching your search',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                if (_searchCity.isNotEmpty || _searchController.text.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _searchCity = '';
+                        _searchController.clear();
+                      });
+                      _loadVenues();
+                    },
+                    child: const Text('Clear filters'),
+                  ),
+                ],
+              ],
             ),
           );
         }
@@ -374,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _buildLoadingMoreIndicator() {
     if (!_hasMoreData) {
       return Padding(
@@ -399,5 +406,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
