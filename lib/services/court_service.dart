@@ -10,40 +10,22 @@ class CourtService {
   Future<List<FutsalCourt>> searchFutsalCourts({
     String? city,
     String? name,
+    int page = 1,
+    int limit = 10,
   }) async {
-    try {
-      final queryParams = <String, dynamic>{};
-      if (city != null && city.isNotEmpty) {
-        queryParams['city'] = city;
-      }
-      if (name != null && name.isNotEmpty) {
-        queryParams['name'] = name;
-      }
+    final response = await _apiService.get(
+      "/courts/public/venues/search",
+      queryParameters: {
+        "city": city,
+        "name": name,
+        "page": page.toString(),
+        "limit": limit.toString(),
+      },
+    );
 
-      final response = await _apiService.get<Map<String, dynamic>>(
-        AppConstants.courtsSearchFutsal,
-        queryParameters: queryParams,
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-
-      if (!response.success || response.data == null) {
-        return [];
-      }
-
-      // Server returns: { futsalCourts: [...], count: ... }
-      final data = response.data as Map<String, dynamic>;
-      final futsalCourtsList = data['futsalCourts'] as List<dynamic>?;
-      
-      if (futsalCourtsList == null) {
-        return [];
-      }
-
-      return futsalCourtsList
-          .map((item) => FutsalCourt.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to search courts: ${e.toString()}');
-    }
+    return (response.data['venues'] as List)
+        .map((v) => FutsalCourt.fromJson(v))
+        .toList();
   }
 
   // Get Futsal Court Details

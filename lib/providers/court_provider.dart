@@ -24,7 +24,12 @@ class CourtProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   // Search Futsal Courts
-  Future<void> searchCourts({String? city, String? name}) async {
+  Future<void> searchCourts({
+    String? city,
+    String? name,
+    int page = 1,
+    int limit = 10,
+  }) async {
     _isSearching = true;
     _errorMessage = null;
     notifyListeners();
@@ -33,6 +38,8 @@ class CourtProvider with ChangeNotifier {
       _courts = await _courtService.searchFutsalCourts(
         city: city,
         name: name,
+        page: page,
+        limit: limit,
       );
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -42,6 +49,7 @@ class CourtProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   // Get Futsal Court Details
   Future<void> getFutsalCourtDetails(String futsalCourtId) async {

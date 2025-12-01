@@ -19,12 +19,12 @@ class AppConstants {
   static const String authRefreshToken = '/auth/refresh-token';
 
   // Court endpoints
-  static const String courtsSearchFutsal = '/courts/public/futsal-courts/search';
+  static const String futsalCourtsDetail = '/courts/public/venues';
+  static const String courtsSearchFutsal = '/courts/public/venues/search';
   static const String courtsSearch = '/courts/public/courts/search';
-  static const String futsalCourtsDetail = '/courts/public/futsal-courts';
-  static const String futsalCourtsWithCourts = '/courts/public/futsal-courts'; // /:id/courts
+  // static const String futsalCourtsWithCourts = '/courts/public/venues'; // /:id/courts
   static const String courtsDetail = '/courts/public/courts';
-  static const String courtAvailability = '/courts/public/courts'; // /:id/availability
+  static const String courtAvailability = '/courts/public/courts/id/availability'; // /:id/availability
   static const String ownerCourts = '/courts/owner/my-courts';
   
   // Booking endpoints
@@ -52,10 +52,10 @@ class AppConstants {
   static const String adminUsers = '/admin/users';
   static const String adminUserById = '/admin/users'; // /:userId
   static const String adminUserStatus = '/admin/users'; // /:userId/status
-  static const String adminFutsalCourts = '/admin/futsal-courts';
-  static const String adminFutsalCourtVerify = '/admin/futsal-courts'; // /:futsalCourtId/verify
-  static const String adminFutsalCourtSuspend = '/admin/futsal-courts'; // /:futsalCourtId/suspend
-  static const String adminFutsalCourtReactivate = '/admin/futsal-courts'; // /:futsalCourtId/reactivate
+  static const String adminFutsalCourts = '/admin/venues';
+  static const String adminFutsalCourtVerify = '/admin/venues'; // /:futsalCourtId/verify
+  static const String adminFutsalCourtSuspend = '/admin/venues'; // /:futsalCourtId/suspend
+  static const String adminFutsalCourtReactivate = '/admin/venues'; // /:futsalCourtId/reactivate
   
   // User endpoints
   static const String userProfile = '/users/me';

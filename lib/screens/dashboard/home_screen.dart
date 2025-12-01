@@ -59,9 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadCourts() async {
     final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts();
+    await courtProvider.getFutsalCourtDetails();
 
-    // Reset pagination
+    if (!mounted) return;  // <-- IMPORTANT
+
     setState(() {
       _currentPage = 1;
       _hasMoreData = true;
@@ -69,11 +70,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadMoreCourts() async {
-    if (_isLoadingMore || !_hasMoreData) return;
-
+    if (!mounted) return;
     setState(() {
       _isLoadingMore = true;
     });
+
 
     try {
       // Remove unused variable
@@ -89,10 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
       // Simulate API call delay for now
       await Future.delayed(const Duration(seconds: 1));
 
+      if (!mounted) return;    // <-- ADD THIS
+
       setState(() {
         _currentPage++;
-        // If API returns empty or less than expected, set _hasMoreData = false
-        // For now, we'll stop after page 3
         if (_currentPage > 3) {
           _hasMoreData = false;
         }
@@ -121,11 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
       name: _searchController.text.isNotEmpty ? _searchController.text : null,
     );
 
-    // Reset pagination when searching
+    if (!mounted) return;  // <-- ADD THIS
+
     setState(() {
       _currentPage = 1;
       _hasMoreData = true;
     });
+
   }
 
   @override
