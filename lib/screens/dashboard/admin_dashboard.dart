@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/admin_service.dart';
 import '../../models/user.dart';
-import '../../models/futsal_court.dart';
+import '../../models/venue.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({Key? key}) : super(key: key);
@@ -23,7 +23,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   Map<String, dynamic>? _stats;
   List<Map<String, dynamic>> _pendingOwners = [];
   List<User> _users = [];
-  List<FutsalCourt> _futsalCourts = [];
+  List<Venue> _venues = [];
   bool _isLoading = true;
   String _error = '';
 
@@ -44,13 +44,13 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
       final stats = await _adminService.getDashboardStats();
       final pendingOwners = await _adminService.getPendingOwnerRequests();
       final users = await _adminService.getAllUsers();
-      final futsalCourts = await _adminService.getAllFutsalCourts();
+      final venues = await _adminService.getAllVenues();
 
       setState(() {
         _stats = stats;
         _pendingOwners = pendingOwners;
         _users = users;
-        _futsalCourts = futsalCourts;
+        _venues = venues;
         _isLoading = false;
       });
     } catch (e) {
@@ -87,7 +87,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
             Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
             Tab(icon: Icon(Icons.person_add), text: 'Owner Requests (${_pendingOwners.length})'),
             Tab(icon: Icon(Icons.people), text: 'Users'),
-            Tab(icon: Icon(Icons.sports_soccer), text: 'Futsal Courts'),
+            Tab(icon: Icon(Icons.location_city), text: 'Venues'),
           ],
         ),
       ),
@@ -113,7 +113,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           _buildOverviewTab(),
           _buildOwnerRequestsTab(),
           _buildUsersTab(),
-          _buildFutsalCourtsTab(),
+          _buildVenuesTab(),
         ],
       ),
     );
@@ -419,45 +419,45 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     );
   }
 
-  Widget _buildFutsalCourtsTab() {
+  Widget _buildVenuesTab() {
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
-      child: _futsalCourts.isEmpty
-          ? const Center(child: Text('No futsal courts found'))
+      child: _venues.isEmpty
+          ? const Center(child: Text('No venues found'))
           : ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _futsalCourts.length,
+        itemCount: _venues.length,
         itemBuilder: (context, index) {
-          final court = _futsalCourts[index];
+          final venue = _venues[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               leading: const Icon(Icons.sports_soccer, size: 40, color: Colors.indigo),
-              title: Text(court.name),
+              title: Text(venue.name),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${court.city}, ${court.address}'),
+                  Text('${venue.city}, ${venue.address}'),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Chip(
                         label: Text(
-                          court.isActive ? 'ACTIVE' : 'SUSPENDED',
+                          venue.isActive ? 'ACTIVE' : 'SUSPENDED',
                           style: const TextStyle(fontSize: 10),
                         ),
-                        backgroundColor: court.isActive
+                        backgroundColor: venue.isActive
                             ? Colors.blue[100]
                             : Colors.red[100],
                         padding: EdgeInsets.zero,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       const SizedBox(width: 8),
-                      if (court.rating != null)
+                      if (venue.rating != null)
                         Row(
                           children: [
                             const Icon(Icons.star, size: 16, color: Colors.amber),
-                            Text(' ${court.rating!.toStringAsFixed(1)}'),
+                            Text(' ${venue.rating!.toStringAsFixed(1)}'),
                           ],
                         ),
                     ],
@@ -473,11 +473,11 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                       title: const Text('Verify', style: TextStyle(fontSize: 14)),
                       onTap: () {
                         Navigator.pop(context);
-                        _verifyFutsalCourt(court.id);
+                        _verifyVenue(venue.id);
                       },
                     ),
                   ),
-                  if (court.isActive)
+                  if (venue.isActive)
                     PopupMenuItem(
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -488,7 +488,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                         ),
                         onTap: () {
                           Navigator.pop(context);
-                          _suspendFutsalCourt(court.id);
+                          _suspendVenue(venue.id);
                         },
                       ),
                     )
@@ -503,7 +503,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                         ),
                         onTap: () {
                           Navigator.pop(context);
-                          _reactivateFutsalCourt(court.id);
+                          _reactivateVenue(venue.id);
                         },
                       ),
                     ),
@@ -754,15 +754,15 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     }
   }
 
-  Future<void> _verifyFutsalCourt(String courtId) async {
+  Future<void> _verifyVenue(String venueId) async {
     try {
-      await _adminService.verifyFutsalCourt(courtId);
+      await _adminService.verifyVenue(venueId);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Futsal court verified successfully'),
+          content: Text('Venue verified successfully'),
           backgroundColor: Colors.green,
         ),
       );
@@ -779,15 +779,15 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     }
   }
 
-  Future<void> _suspendFutsalCourt(String courtId) async {
+  Future<void> _suspendVenue(String venueId) async {
     try {
-      await _adminService.suspendFutsalCourt(courtId);
+      await _adminService.suspendVenue(venueId);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Futsal court suspended successfully'),
+          content: Text('Venue suspended successfully'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -804,15 +804,15 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     }
   }
 
-  Future<void> _reactivateFutsalCourt(String courtId) async {
+  Future<void> _reactivateVenue(String venueId) async {
     try {
-      await _adminService.reactivateFutsalCourt(courtId);
+      await _adminService.reactivateVenue(venueId);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Futsal court reactivated successfully'),
+          content: Text('Venue reactivated successfully'),
           backgroundColor: Colors.green,
         ),
       );
