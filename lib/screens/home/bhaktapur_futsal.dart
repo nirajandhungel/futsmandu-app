@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/court_provider.dart';
+import '../../providers/venue_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common/loading.dart';
-import '../../widgets/court/futsal_card.dart';
+import '../../widgets/court/venue_card.dart';
 
 class BhaktapurFutsalScreen extends StatefulWidget {
   const BhaktapurFutsalScreen({super.key});
@@ -28,7 +28,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadBhaktapurCourts();
+      _loadBhaktapurVenues();
     });
 
     _scrollController.addListener(_onScroll);
@@ -45,14 +45,14 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreCourts();
+        _loadMoreVenues();
       }
     }
   }
 
-  Future<void> _loadBhaktapurCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts(city: 'Bhaktapur');
+  Future<void> _loadBhaktapurVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.searchVenues(city: 'Bhaktapur');
 
     setState(() {
       _currentPage = 1;
@@ -60,7 +60,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
     });
   }
 
-  Future<void> _loadMoreCourts() async {
+  Future<void> _loadMoreVenues() async {
     if (_isLoadingMore || !_hasMoreData) return;
 
     setState(() {
@@ -80,7 +80,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
       if (mounted) {
         Helpers.showSnackbar(
           context,
-          'Failed to load more courts',
+          'Failed to load more venues',
           isError: true,
         );
       }
@@ -93,9 +93,9 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
     }
   }
 
-  Future<void> _searchCourts() async {
-    final courtProvider = context.read<CourtProvider>();
-    await courtProvider.searchCourts(
+  Future<void> _searchVenues() async {
+    final venueProvider = context.read<VenueProvider>();
+    await venueProvider.searchVenues(
       city: 'Bhaktapur',
       name: _searchController.text.isNotEmpty ? _searchController.text : null,
     );
@@ -114,7 +114,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Futsal Courts in Bhaktapur'),
+        title: const Text('Venues in Bhaktapur'),
       ),
       body: Column(
         children: [
@@ -134,17 +134,17 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search futsal courts in Bhaktapur...',
+              hintText: 'Search venues in Bhaktapur...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
-                  _searchCourts();
+                  _searchVenues();
                 },
               ),
             ),
-            onSubmitted: (_) => _searchCourts(),
+            onSubmitted: (_) => _searchVenues(),
           ),
         ],
       ),
@@ -152,10 +152,10 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
   }
 
   Widget _buildBodyContent() {
-    return Consumer<CourtProvider>(
+    return Consumer<VenueProvider>(
       builder: (context, provider, _) {
         if (provider.isSearching && _currentPage == 1) {
-          return const LoadingWidget(message: 'Loading courts...');
+          return const LoadingWidget(message: 'Loading venues...');
         }
 
         if (provider.errorMessage != null && _currentPage == 1) {
@@ -174,7 +174,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
                 ElevatedButton(
                   onPressed: () {
                     provider.clearError();
-                    _loadBhaktapurCourts();
+                    _loadBhaktapurVenues();
                   },
                   child: const Text('Retry'),
                 ),
@@ -183,10 +183,10 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
           );
         }
 
-        if (provider.courts.isEmpty && _currentPage == 1) {
+        if (provider.venues.isEmpty && _currentPage == 1) {
           return const Center(
             child: Text(
-              'No futsal courts found in Bhaktapur',
+              'No venues found in Bhaktapur',
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.textSecondary,
@@ -196,18 +196,18 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: _loadBhaktapurCourts,
+          onRefresh: _loadBhaktapurVenues,
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(AppTheme.paddingM),
-            itemCount: provider.courts.length + (_hasMoreData ? 1 : 0),
+            itemCount: provider.venues.length + (_hasMoreData ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == provider.courts.length) {
+              if (index == provider.venues.length) {
                 return _buildLoadingMoreIndicator();
               }
 
-              return FutsalCard(
-                futsalCourt: provider.courts[index],
+              return VenueCard(
+                venue: provider.venues[index],
                 onTap: () {
                   Helpers.showSnackbar(
                     context,
@@ -228,7 +228,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
         padding: const EdgeInsets.all(16),
         child: Center(
           child: Text(
-            'No more courts in Bhaktapur',
+            'No more venues in Bhaktapur',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.textSecondary,
             ),
