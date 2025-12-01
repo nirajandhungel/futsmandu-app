@@ -7,7 +7,6 @@ import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../../widgets/common/loading.dart';
-// Remove unused import: import '../../widgets/common/error_widget.dart';
 import '../../widgets/court/futsal_card.dart';
 import '../menu/app_drawer.dart';
 
@@ -179,7 +178,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          if (authProvider.user?.isOwner ?? false) {
+          // Show "Add Court" button only when user is in owner mode
+          if (authProvider.user?.isInOwnerMode ?? false) {
             return FloatingActionButton.extended(
               onPressed: () {
                 Helpers.showSnackbar(context, 'Add court coming soon!');

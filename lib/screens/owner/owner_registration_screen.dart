@@ -29,10 +29,10 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   final _page3FormKey = GlobalKey<FormState>();
 
   // Page 1 - Basic Information
-  final _futsalNameController = TextEditingController();
+
   final _panNumberController = TextEditingController();
   final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
+
   final _phoneController = TextEditingController();
 
   // Page 2 - Additional KYC
@@ -51,10 +51,10 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _futsalNameController.dispose();
+
     _panNumberController.dispose();
     _addressController.dispose();
-    _cityController.dispose();
+
     _phoneController.dispose();
     _bankAccountController.dispose();
     _bankNameController.dispose();
@@ -157,33 +157,29 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
       final authProvider = context.read<AuthProvider>();
       final ownerService = OwnerService();
 
-      // Prepare additionalKyc data
+      // Prepare additionalKyc data (excluding phoneNumber as it's sent separately)
       final additionalKyc = {
-        'futsalName': _futsalNameController.text.trim(),
-        'city': _cityController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(),
         'bankAccount': _bankAccountController.text.trim(),
         'bankName': _bankNameController.text.trim(),
         'citizenshipNumber': _citizenshipNumberController.text.trim(),
         'ownerName': _ownerNameController.text.trim(),
       };
 
-      // Prepare document paths
-      final documentPaths = <String>[
-        _profilePhoto!.path,
-        _citizenshipFront!.path,
-        _citizenshipBack!.path,
-      ];
-
       // Call API to activate owner mode
-      final response = await ownerService.activateOwnerMode(
+      final authResponse = await ownerService.activateOwnerMode(
         panNumber: _panNumberController.text.trim(),
         address: _addressController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        profilePhoto: _profilePhoto!,
+        citizenshipFront: _citizenshipFront!,
+        citizenshipBack: _citizenshipBack!,
         additionalKyc: additionalKyc,
-        documentPaths: documentPaths,
       );
 
       if (!mounted) return;
+
+      // Update user in auth provider
+      await authProvider.updateUser(authResponse.user);
 
       // Show success message
       Helpers.showSnackbar(
@@ -193,9 +189,6 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
 
       // Navigate back
       context.pop();
-
-      // Optionally reload user data
-      await authProvider.initialize();
     } catch (e) {
       if (mounted) {
         Helpers.showSnackbar(
@@ -330,13 +323,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            AppTextField(
-              label: 'Futsal Name',
-              hint: 'Enter your futsal court name',
-              controller: _futsalNameController,
-              validator: (value) => Validators.required(value, 'Futsal name'),
-              prefixIcon: const Icon(Icons.sports_soccer),
-            ),
+
             const SizedBox(height: 20),
             AppTextField(
               label: 'PAN Number',
@@ -355,16 +342,10 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               maxLines: 2,
             ),
             const SizedBox(height: 20),
-            AppTextField(
-              label: 'City',
-              hint: 'Enter city',
-              controller: _cityController,
-              validator: (value) => Validators.required(value, 'City'),
-              prefixIcon: const Icon(Icons.location_city),
-            ),
+
             const SizedBox(height: 20),
             AppTextField(
-              label: 'Contact Phone',
+              label: 'Phone Number',
               hint: 'Enter contact number',
               controller: _phoneController,
               validator: Validators.phoneNumber,

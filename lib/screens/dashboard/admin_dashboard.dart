@@ -1,45 +1,61 @@
+// ============================================
+// FILE: lib/screens/dashboard/admin_dashboard.dart
+// ============================================
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/admin_service.dart';
-import '../../utils/theme.dart';
-import '../../utils/helpers.dart';
-import '../../widgets/common/loading.dart';
+import '../../models/user.dart';
+import '../../models/futsal_court.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+class AdminDashboard extends StatefulWidget {
+  const AdminDashboard({Key? key}) : super(key: key);
 
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final AdminService _adminService = AdminService();
-  Map<String, dynamic>? _dashboardData;
+
+  Map<String, dynamic>? _stats;
+  List<Map<String, dynamic>> _pendingOwners = [];
+  List<User> _users = [];
+  List<FutsalCourt> _futsalCourts = [];
   bool _isLoading = true;
-  String? _errorMessage;
+  String _error = '';
 
   @override
   void initState() {
     super.initState();
-    _loadDashboard();
+    _tabController = TabController(length: 4, vsync: this);
+    _loadDashboardData();
   }
 
-  Future<void> _loadDashboard() async {
+  Future<void> _loadDashboardData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _error = '';
     });
 
     try {
-      final data = await _adminService.getDashboardStats();
+      final stats = await _adminService.getDashboardStats();
+      final pendingOwners = await _adminService.getPendingOwnerRequests();
+      final users = await _adminService.getAllUsers();
+      final futsalCourts = await _adminService.getAllFutsalCourts();
+
       setState(() {
-        _dashboardData = data;
+        _stats = stats;
+        _pendingOwners = pendingOwners;
+        _users = users;
+        _futsalCourts = futsalCourts;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _error = e.toString();
         _isLoading = false;
       });
     }
@@ -50,162 +66,119 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
+        backgroundColor: Colors.indigo,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadDashboard,
+            onPressed: _loadDashboardData,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Provider.of<AuthProvider>(context, listen: false).logout();
+              Navigator.of(context).pushReplacementNamed('/login');
+            },
           ),
         ],
-      ),
-      body: _isLoading
-          ? const LoadingWidget(message: 'Loading dashboard...')
-          : _errorMessage != null
-              ? _buildErrorView()
-              : _buildDashboard(),
-    );
-  }
-
-  Widget _buildErrorView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadDashboard,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDashboard() {
-    if (_dashboardData == null) {
-      return const Center(child: Text('No data available'));
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadDashboard,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.paddingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 16),
-            _buildStatsGrid(),
-            const SizedBox(height: 24),
-            _buildQuickActions(),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: [
+            Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
+            Tab(icon: Icon(Icons.person_add), text: 'Owner Requests (${_pendingOwners.length})'),
+            Tab(icon: Icon(Icons.people), text: 'Users'),
+            Tab(icon: Icon(Icons.sports_soccer), text: 'Futsal Courts'),
           ],
         ),
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error.isNotEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadDashboardData,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : TabBarView(
+        controller: _tabController,
+        children: [
+          _buildOverviewTab(),
+          _buildOwnerRequestsTab(),
+          _buildUsersTab(),
+          _buildFutsalCourtsTab(),
+        ],
+      ),
     );
   }
 
-  Widget _buildWelcomeCard() {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        return Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildOverviewTab() {
+    if (_stats == null) return const Center(child: Text('No data available'));
+
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Dashboard Overview',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.5,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Admin Dashboard',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                _buildStatCard(
+                  'Total Users',
+                  (_stats!['totalUsers'] ?? 0).toString(),
+                  Icons.people,
+                  Colors.blue,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Welcome, ${authProvider.user?.fullName ?? 'Admin'}!',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                _buildStatCard(
+                  'Total Owners',
+                  (_stats!['totalOwners'] ?? 0).toString(),
+                  Icons.business_center,
+                  Colors.green,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Manage users, owners, and futsal courts',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+                _buildStatCard(
+                  'Total Venues',
+                  (_stats!['totalVenues'] ?? 0).toString(),
+                  Icons.location_city,
+                  Colors.purple,
+                ),
+                _buildStatCard(
+                  'Pending Requests',
+                  (_stats!['pendingOwnerRequests'] ?? 0).toString(),
+                  Icons.pending_actions,
+                  Colors.orange,
+                ),
+                _buildStatCard(
+                  'Total Bookings',
+                  (_stats!['totalBookings'] ?? 0).toString(),
+                  Icons.calendar_today,
+                  Colors.indigo,
                 ),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatsGrid() {
-    final stats = _dashboardData!;
-    
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: [
-        _buildStatCard(
-          'Total Users',
-          '${stats['totalUsers'] ?? 0}',
-          Icons.people,
-          Colors.blue,
+          ],
         ),
-        _buildStatCard(
-          'Total Owners',
-          '${stats['totalOwners'] ?? 0}',
-          Icons.business,
-          Colors.green,
-        ),
-        _buildStatCard(
-          'Pending Requests',
-          '${stats['pendingOwnerRequests'] ?? 0}',
-          Icons.pending_actions,
-          Colors.orange,
-        ),
-        _buildStatCard(
-          'Futsal Courts',
-          '${stats['totalFutsalCourts'] ?? 0}',
-          Icons.sports_soccer,
-          Colors.purple,
-        ),
-        _buildStatCard(
-          'Total Bookings',
-          '${stats['totalBookings'] ?? 0}',
-          Icons.calendar_today,
-          Colors.teal,
-        ),
-        _buildStatCard(
-          'Active Courts',
-          '${stats['activeCourts'] ?? 0}',
-          Icons.check_circle,
-          Colors.indigo,
-        ),
-      ],
+      ),
     );
   }
 
@@ -216,13 +189,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
+            Icon(icon, size: 40, color: color),
+            const SizedBox(height: 12),
             Text(
               value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: TextStyle(
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -230,8 +203,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 4),
             Text(
               title,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textSecondary,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
               ),
             ),
           ],
@@ -240,94 +215,623 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 2.5,
-          children: [
-            _buildActionCard(
-              'Manage Users',
-              Icons.people,
-              Colors.blue,
-              () {
-                Helpers.showSnackbar(context, 'User management coming soon!');
-              },
-            ),
-            _buildActionCard(
-              'Pending Owners',
-              Icons.pending_actions,
-              Colors.orange,
-              () {
-                Helpers.showSnackbar(context, 'Owner requests coming soon!');
-              },
-            ),
-            _buildActionCard(
-              'Futsal Courts',
-              Icons.sports_soccer,
-              Colors.purple,
-              () {
-                Helpers.showSnackbar(context, 'Court management coming soon!');
-              },
-            ),
-            _buildActionCard(
-              'Reports',
-              Icons.analytics,
-              Colors.teal,
-              () {
-                Helpers.showSnackbar(context, 'Reports coming soon!');
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  Widget _buildOwnerRequestsTab() {
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: _pendingOwners.isEmpty
+          ? const Center(child: Text('No pending owner requests'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _pendingOwners.length,
+        itemBuilder: (context, index) {
+          final owner = _pendingOwners[index];
+          final user = owner['user'] as Map<String, dynamic>?;
+          final ownerProfile = owner['ownerProfile'] as Map<String, dynamic>?;
 
-  Widget _buildActionCard(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ExpansionTile(
+              leading: CircleAvatar(
+                backgroundImage: ownerProfile?['profilePhotoUrl'] != null
+                    ? NetworkImage(ownerProfile!['profilePhotoUrl'])
+                    : null,
+                child: ownerProfile?['profilePhotoUrl'] == null
+                    ? const Icon(Icons.person)
+                    : null,
+              ),
+              title: Text(user?['fullName'] ?? 'N/A'),
+              subtitle: Text(user?['email'] ?? 'N/A'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoRow('Phone', user?['phoneNumber'] ?? 'N/A'),
+                      _buildInfoRow('PAN Number', ownerProfile?['panNumber'] ?? 'N/A'),
+                      _buildInfoRow('Address', ownerProfile?['address'] ?? 'N/A'),
+                      _buildInfoRow('Status', ownerProfile?['status'] ?? 'N/A'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Documents:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          if (ownerProfile?['citizenshipFrontUrl'] != null)
+                            ElevatedButton.icon(
+                              onPressed: () => _showDocument(
+                                context,
+                                ownerProfile!['citizenshipFrontUrl'],
+                                'Citizenship Front',
+                              ),
+                              icon: const Icon(Icons.image, size: 18),
+                              label: const Text('Front'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                          if (ownerProfile?['citizenshipBackUrl'] != null)
+                            ElevatedButton.icon(
+                              onPressed: () => _showDocument(
+                                context,
+                                ownerProfile!['citizenshipBackUrl'],
+                                'Citizenship Back',
+                              ),
+                              icon: const Icon(Icons.image, size: 18),
+                              label: const Text('Back'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _approveOwner(owner['_id'] ?? owner['id']),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.check),
+                              label: const Text('Approve'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _rejectOwner(owner['_id'] ?? owner['id']),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.close),
+                              label: const Text('Reject'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildUsersTab() {
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: _users.isEmpty
+          ? const Center(child: Text('No users found'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _users.length,
+        itemBuilder: (context, index) {
+          final user = _users[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: CircleAvatar(
+                child: Text(user.fullName[0].toUpperCase()),
               ),
-              Icon(Icons.chevron_right, color: AppTheme.textSecondary),
-            ],
+              title: Text(user.fullName),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(user.email),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Chip(
+                        label: Text(
+                          user.role,
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        backgroundColor: Colors.blue[100],
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: Text(
+                          user.isActive ? 'ACTIVE' : 'SUSPENDED',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        backgroundColor: user.isActive
+                            ? Colors.green[100]
+                            : Colors.red[100],
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              trailing: PopupMenuButton(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        user.isActive ? Icons.block : Icons.check_circle,
+                        size: 20,
+                      ),
+                      title: Text(
+                        user.isActive ? 'Suspend' : 'Activate',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _updateUserStatus(user.id, !user.isActive);
+                      },
+                    ),
+                  ),
+                  PopupMenuItem(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.delete, color: Colors.red, size: 20),
+                      title: const Text(
+                        'Delete',
+                        style: TextStyle(fontSize: 14, color: Colors.red),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _deleteUser(user.id);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFutsalCourtsTab() {
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: _futsalCourts.isEmpty
+          ? const Center(child: Text('No futsal courts found'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _futsalCourts.length,
+        itemBuilder: (context, index) {
+          final court = _futsalCourts[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.sports_soccer, size: 40, color: Colors.indigo),
+              title: Text(court.name),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${court.city}, ${court.address}'),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Chip(
+                        label: Text(
+                          court.isActive ? 'ACTIVE' : 'SUSPENDED',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        backgroundColor: court.isActive
+                            ? Colors.blue[100]
+                            : Colors.red[100],
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      const SizedBox(width: 8),
+                      if (court.rating != null)
+                        Row(
+                          children: [
+                            const Icon(Icons.star, size: 16, color: Colors.amber),
+                            Text(' ${court.rating!.toStringAsFixed(1)}'),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              trailing: PopupMenuButton(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.verified, size: 20),
+                      title: const Text('Verify', style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _verifyFutsalCourt(court.id);
+                      },
+                    ),
+                  ),
+                  if (court.isActive)
+                    PopupMenuItem(
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.block, color: Colors.orange, size: 20),
+                        title: const Text(
+                          'Suspend',
+                          style: TextStyle(fontSize: 14, color: Colors.orange),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _suspendFutsalCourt(court.id);
+                        },
+                      ),
+                    )
+                  else
+                    PopupMenuItem(
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                        title: const Text(
+                          'Reactivate',
+                          style: TextStyle(fontSize: 14, color: Colors.green),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _reactivateFutsalCourt(court.id);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  void _showDocument(BuildContext context, String url, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              title: Text(title),
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            Expanded(
+              child: InteractiveViewer(
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, size: 48, color: Colors.red),
+                          SizedBox(height: 8),
+                          Text('Failed to load image'),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
+  Future<void> _approveOwner(String ownerId) async {
+    try {
+      await _adminService.approveOwnerRequest(
+        ownerId,
+        status: 'APPROVED',
+        notes: 'Documents verified and approved',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Owner approved successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _rejectOwner(String ownerId) async {
+    // Show dialog to get rejection reason
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Reject Owner Request'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Reason for rejection',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Reject'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (reason == null || reason.isEmpty) return;
+
+    try {
+      await _adminService.updateOwnerStatus(
+        ownerId,
+        isActive: false,
+        reason: reason,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Owner request rejected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateUserStatus(String userId, bool isActive) async {
+    try {
+      await _adminService.updateUserStatus(
+        userId,
+        isActive: isActive,
+        reason: isActive ? 'User reactivated' : 'User suspended by admin',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('User ${isActive ? 'activated' : 'suspended'} successfully'),
+          backgroundColor: isActive ? Colors.green : Colors.orange,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteUser(String userId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this user? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _adminService.deleteUser(userId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User deleted successfully'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _verifyFutsalCourt(String courtId) async {
+    try {
+      await _adminService.verifyFutsalCourt(courtId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Futsal court verified successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _suspendFutsalCourt(String courtId) async {
+    try {
+      await _adminService.suspendFutsalCourt(courtId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Futsal court suspended successfully'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reactivateFutsalCourt(String courtId) async {
+    try {
+      await _adminService.reactivateFutsalCourt(courtId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Futsal court reactivated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadDashboardData();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+}

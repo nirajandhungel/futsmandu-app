@@ -20,6 +20,7 @@ import 'screens/home/kathmandu_futsal.dart';
 import 'screens/home/lalitpur_futsal.dart';
 import 'screens/dashboard/owner_dashboard.dart';
 import 'screens/dashboard/admin_dashboard.dart';
+import 'screens/owner/owner_registration_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,9 +113,14 @@ class FutsmanduApp extends StatelessWidget {
                   path: RouteNames.ownerDashboard,
                   builder: (context, state) => const OwnerDashboardScreen(),
                 ),
+
+                GoRoute(
+                  path: RouteNames.OwnerKycScreen ,
+                  builder: (context, state) => const OwnerKycScreen(),
+                ),
                 GoRoute(
                   path: RouteNames.adminDashboard,
-                  builder: (context, state) => const AdminDashboardScreen(),
+                  builder: (context, state) => const AdminDashboard(),
                 ),
               ],
             ),

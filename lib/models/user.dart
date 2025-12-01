@@ -5,7 +5,9 @@ class User extends Equatable {
   final String email;
   final String fullName;
   final String role;
+  final String mode; // PLAYER, OWNER, ADMIN
   final String? phoneNumber;
+  final String? ownerStatus; // DRAFT, PENDING, APPROVED, REJECTED, INACTIVE
   final bool isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -15,7 +17,9 @@ class User extends Equatable {
     required this.email,
     required this.fullName,
     required this.role,
+    required this.mode,
     this.phoneNumber,
+    this.ownerStatus,
     required this.isActive,
     this.createdAt,
     this.updatedAt,
@@ -27,7 +31,13 @@ class User extends Equatable {
       email: json['email'] ?? '',
       fullName: json['fullName'] ?? '',
       role: json['role'] ?? 'PLAYER',
+      // Use mode from response, or default based on role
+      // Note: mode can be PLAYER even if role is OWNER (when owner mode is deactivated)
+      mode: json['mode']?.toString().toUpperCase() ?? 
+            (json['role']?.toString().toUpperCase() == 'ADMIN' ? 'ADMIN' : 
+             (json['role']?.toString().toUpperCase() == 'OWNER' ? 'OWNER' : 'PLAYER')),
       phoneNumber: json['phoneNumber'],
+      ownerStatus: json['ownerStatus']?.toString().toUpperCase(),
       isActive: json['isActive'] ?? true,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
@@ -44,7 +54,9 @@ class User extends Equatable {
       'email': email,
       'fullName': fullName,
       'role': role,
+      'mode': mode,
       'phoneNumber': phoneNumber,
+      'ownerStatus': ownerStatus,
       'isActive': isActive,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -56,7 +68,9 @@ class User extends Equatable {
     String? email,
     String? fullName,
     String? role,
+    String? mode,
     String? phoneNumber,
+    String? ownerStatus,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -66,7 +80,9 @@ class User extends Equatable {
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
+      mode: mode ?? this.mode,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      ownerStatus: ownerStatus ?? this.ownerStatus,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -76,6 +92,22 @@ class User extends Equatable {
   bool get isPlayer => role == 'PLAYER';
   bool get isOwner => role == 'OWNER';
   bool get isAdmin => role == 'ADMIN';
+  
+  // Mode-based getters (separate from role)
+  bool get isInPlayerMode => mode == 'PLAYER';
+  bool get isInOwnerMode => mode == 'OWNER';
+  bool get isInAdminMode => mode == 'ADMIN';
+  
+  // Owner status getters
+  bool get hasOwnerProfile => ownerStatus != null;
+  bool get isOwnerApproved => ownerStatus == 'APPROVED';
+  bool get isOwnerPending => ownerStatus == 'PENDING';
+  bool get isOwnerRejected => ownerStatus == 'REJECTED';
+  bool get isOwnerDraft => ownerStatus == 'DRAFT';
+  bool get isOwnerNotVerified => ownerStatus == null || 
+                                  ownerStatus == 'PENDING' || 
+                                  ownerStatus == 'DRAFT' || 
+                                  ownerStatus == 'REJECTED';
 
   @override
   List<Object?> get props => [
@@ -83,7 +115,9 @@ class User extends Equatable {
     email,
     fullName,
     role,
+    mode,
     phoneNumber,
+    ownerStatus,
     isActive,
     createdAt,
     updatedAt,

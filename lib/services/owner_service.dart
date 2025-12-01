@@ -1,43 +1,100 @@
+import 'dart:io';
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import '../models/futsal_court.dart';
+import '../models/user.dart';
 import '../utils/constants.dart';
 import 'api_service.dart';
+import 'storage_service.dart';
 
 class OwnerService {
   final ApiService _apiService = ApiService();
+  final StorageService _storage = StorageService();
 
-  // Activate Owner Mode
-  Future<Map<String, dynamic>> activateOwnerMode({
+  // Activate Owner Mode (with file uploads)
+  Future<AuthResponse> activateOwnerMode({
     required String panNumber,
     required String address,
+    required String phoneNumber,
     Map<String, dynamic>? additionalKyc,
-    List<String>? documentPaths,
+    required File profilePhoto,
+    required File citizenshipFront,
+    required File citizenshipBack,
   }) async {
     try {
-      final response = await _apiService.post<Map<String, dynamic>>(
+      final dio = _apiService.dio;
+      final token = _storage.getAccessToken();
+      
+      // Create FormData for multipart/form-data
+      // Convert additionalKyc to JSON string if provided
+      String? additionalKycJsonString;
+      if (additionalKyc != null && additionalKyc.isNotEmpty) {
+        // Remove phoneNumber from additionalKyc if it exists (we're sending it separately)
+        final kycData = Map<String, dynamic>.from(additionalKyc);
+        kycData.remove('phoneNumber'); // phoneNumber is sent separately
+        if (kycData.isNotEmpty) {
+          additionalKycJsonString = jsonEncode(kycData);
+        }
+      }
+      
+      final formData = FormData.fromMap({
+        'panNumber': panNumber,
+        'address': address,
+        'phoneNumber': phoneNumber,
+        if (additionalKycJsonString != null) 'additionalKyc': additionalKycJsonString,
+        'profilePhoto': await MultipartFile.fromFile(
+          profilePhoto.path,
+          filename: 'profile_photo.jpg',
+        ),
+        'citizenshipFront': await MultipartFile.fromFile(
+          citizenshipFront.path,
+          filename: 'citizenship_front.jpg',
+        ),
+        'citizenshipBack': await MultipartFile.fromFile(
+          citizenshipBack.path,
+          filename: 'citizenship_back.jpg',
+        ),
+      });
+
+      // Make request with proper headers (Dio will set Content-Type automatically for FormData)
+      final response = await dio.post(
         AppConstants.ownerActivate,
-        data: {
-          'panNumber': panNumber,
-          'address': address,
-          if (additionalKyc != null) 'additionalKyc': additionalKyc,
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
-      if (!response.success || response.data == null) {
-        throw Exception(response.message ?? 'Failed to activate owner mode');
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        // Server returns: { success: true, data: { user: {...}, tokens: {...} } }
+        final data = response.data['data'] as Map<String, dynamic>;
+        final authResponse = AuthResponse.fromJson(data);
+        
+        // Save tokens and user data
+        await _storage.saveTokens(authResponse.tokens);
+        await _storage.saveUser(authResponse.user);
+        
+        return authResponse;
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to activate owner mode');
       }
-
-      return response.data as Map<String, dynamic>;
     } catch (e) {
+      if (e is DioException) {
+        final message = e.response?.data?['message'] ?? e.message ?? 'Failed to activate owner mode';
+        throw Exception(message);
+      }
       throw Exception('Failed to activate owner mode: ${e.toString()}');
     }
   }
 
   // Deactivate Owner Mode
-  Future<Map<String, dynamic>> deactivateOwnerMode() async {
+  Future<AuthResponse> deactivateOwnerMode({String? reason}) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
         AppConstants.ownerDeactivate,
+        data: reason != null ? {'reason': reason} : null,
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -45,7 +102,15 @@ class OwnerService {
         throw Exception(response.message ?? 'Failed to deactivate owner mode');
       }
 
-      return response.data as Map<String, dynamic>;
+      // Server returns: { success: true, data: { user: {...}, tokens: {...} } }
+      final data = response.data as Map<String, dynamic>;
+      final authResponse = AuthResponse.fromJson(data);
+      
+      // Save tokens and user data
+      await _storage.saveTokens(authResponse.tokens);
+      await _storage.saveUser(authResponse.user);
+      
+      return authResponse;
     } catch (e) {
       throw Exception('Failed to deactivate owner mode: ${e.toString()}');
     }

@@ -102,6 +102,7 @@ class RouteNames {
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
   static const String ownerDashboard = '/owner-dashboard';
+  static const String OwnerKycScreen = '/owner-kyc';
   static const String adminDashboard = '/admin-dashboard';
   static const String myCourts = '/my-courts';
   static const String addCourt = '/add-court';
