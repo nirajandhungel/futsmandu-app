@@ -21,6 +21,7 @@ class AppConstants {
   // Venue & Court endpoints
   static const String venuesDetail = '/courts/public/venues';
   static const String venuesSearch = '/courts/public/venues/search';
+  static const String venueCourt = '/courts/public/venues/id/courts';
   static const String courtsSearch = '/courts/public/courts/search';
   static const String courtsDetail = '/courts/public/courts';
   static const String courtAvailability = '/courts/public/courts/id/availability'; // /:id/availability
