@@ -4,16 +4,6 @@ import '../../models/court.dart';
 import '../../utils/theme.dart';
 import 'package:intl/intl.dart';
 
-// HOW TO USE:
-// In your VenueDetailScreen's "Book Now" button:
-//
-// Navigator.push(
-//   context,
-//   MaterialPageRoute(
-//     builder: (context) => BookingScreen(venue: venue),
-//   ),
-// );
-
 class BookingScreen extends StatefulWidget {
   final Venue venue;
 

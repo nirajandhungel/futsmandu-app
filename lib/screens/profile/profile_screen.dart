@@ -204,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
                         title: 'My Bookings',
                         subtitle: 'View your booking history',
                         onTap: () {
-                          context.push(RouteNames.bookingHistory);
+                          context.push(RouteNames.mybookings);
                         },
                       ),
                       if (user.isOwner) ...[

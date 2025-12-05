@@ -23,7 +23,7 @@ import 'screens/owner/owner_registration_screen.dart';
 import 'widgets/court/venuedetail_screen.dart';
 import 'widgets/court/bookscreen_ui.dart';
 import 'models/venue.dart';
-
+import 'screens/bookings/my_bookings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -137,6 +137,10 @@ class FutsmanduApp extends StatelessWidget {
                     final venue = state.extra as Venue;
                     return BookingScreen(venue: venue);
                   },
+                ),
+                GoRoute(
+                  path: RouteNames.mybookings,
+                  builder: (context, state) => const MyBookingsScreen(),
                 ),
               ],
             ),

@@ -6,7 +6,8 @@ import '../../services/owner_service.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
-
+import '../../screens/bookings/my_bookings_screen.dart';
+import '../bookings/my_bookings_screen.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -224,10 +225,12 @@ class AppDrawer extends StatelessWidget {
                 leading: const Icon(Icons.book_online),
                 title: const Text('My Bookings'),
                 onTap: () {
-                  Navigator.pop(context);
-                  context.push(RouteNames.bookingHistory);
+                  Navigator.pop(context);         // Close the drawer
+                  context.go(RouteNames.mybookings); // Navigate to MyBookings screen
                 },
               ),
+
+
 
               // Join Teammates
               ListTile(

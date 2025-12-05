@@ -98,7 +98,7 @@ class RouteNames {
   static const String search = '/search';
   static const String courtDetail = '/court-detail';
   static const String booking = '/booking';  // You already have this
-  static const String bookingHistory = '/booking-history';
+  static const String mybookings = '/MyBookingsScreen';
   static const String bookingConfirmation = '/booking-confirmation';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
@@ -108,4 +108,5 @@ class RouteNames {
   static const String myCourts = '/my-courts';
   static const String addCourt = '/add-court';
   static const String venueDetail = '/venue-detail';
+
 }
