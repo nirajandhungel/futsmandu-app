@@ -23,7 +23,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _isLoading = false;
-  bool _showStatusPage = false;
+  bool _showStatusPage = true;
 
   // Form keys for each page
   final _page1FormKey = GlobalKey<FormState>();
@@ -58,38 +58,36 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.user;
 
-    // Show status page if ownerStatus is not INACTIVE or null
-    if (user != null && user.ownerStatus != null && user.ownerStatus != 'INACTIVE') {
-      setState(() {
-        _showStatusPage = true;
-      });
+    // Always show status page initially - acts as landing page for new users
+    // and status tracker for existing applicants
+    if (user != null) {
       _prefillForm(user);
     }
   }
 
   void _prefillForm(User user) {
 // Check if user has ownerProfile (from your API response)
-  final ownerProfile = user.ownerProfile;
-  
-  if (ownerProfile != null) {
-    // Safe navigation with null checks
-    _panNumberController.text = ownerProfile.panNumber ?? '';
-    _addressController.text = ownerProfile.address ?? '';
-    _phoneController.text = user.phoneNumber ?? '';
-    
-    // Additional KYC data might be in different formats
-    final additionalKyc = ownerProfile.additionalKyc ?? {};
-    _ownerNameController.text = additionalKyc['ownerName'] ?? 
-                               additionalKyc['fullName'] ?? '';
-    _citizenshipNumberController.text = additionalKyc['citizenshipNumber'] ?? '';
-    _bankNameController.text = additionalKyc['bankName'] ?? '';
-    _bankAccountController.text = additionalKyc['bankAccount'] ?? 
-                                 additionalKyc['bankAccountNumber'] ?? '';
-  } else {
-    // If no ownerProfile, still pre-fill phone from user
-    _phoneController.text = user.phoneNumber ?? '';
+    final ownerProfile = user.ownerProfile;
+
+    if (ownerProfile != null) {
+      // Safe navigation with null checks
+      _panNumberController.text = ownerProfile.panNumber ?? '';
+      _addressController.text = ownerProfile.address ?? '';
+      _phoneController.text = user.phoneNumber ?? '';
+
+      // Additional KYC data might be in different formats
+      final additionalKyc = ownerProfile.additionalKyc ?? {};
+      _ownerNameController.text = additionalKyc['ownerName'] ??
+          additionalKyc['fullName'] ?? '';
+      _citizenshipNumberController.text = additionalKyc['citizenshipNumber'] ?? '';
+      _bankNameController.text = additionalKyc['bankName'] ?? '';
+      _bankAccountController.text = additionalKyc['bankAccount'] ??
+          additionalKyc['bankAccountNumber'] ?? '';
+    } else {
+      // If no ownerProfile, still pre-fill phone from user
+      _phoneController.text = user.phoneNumber ?? '';
+    }
   }
-}
 
   @override
   void dispose() {
@@ -249,19 +247,19 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.user;
-    
+
     // Handle null user
     if (user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     // Show status page if ownerStatus is PENDING/APPROVED/REJECTED
     if (_showStatusPage) {
       return _buildStatusPage(user);
     }
-    
+
     // Otherwise show the KYC form
     return _buildKycForm();
   }
@@ -270,7 +268,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   Widget _buildStatusPage(User user) {
     final ownerProfile = user.ownerProfile;
     final status = user.ownerStatus ?? 'INACTIVE';
-    
+
     // Status configurations
     final statusConfig = {
       'PENDING': {
@@ -300,11 +298,12 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
         'icon': Icons.person_outline,
         'color': Colors.grey,
         'buttonText': 'Activate Owner Mode',
+
       },
     };
-    
+
     final config = statusConfig[status] ?? statusConfig['INACTIVE']!;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Owner Status'),
@@ -319,7 +318,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 40),
-            
+
             // Status Icon
             Container(
               width: 120,
@@ -334,9 +333,9 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                 color: config['color'] as Color,
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Status Title
             Text(
               config['title'] as String,
@@ -346,9 +345,9 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Status Message
             Text(
               config['message'] as String,
@@ -358,9 +357,9 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Submitted Info Card
             if (ownerProfile != null) ...[
               Card(
@@ -376,25 +375,25 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       _buildInfoRow('PAN Number', ownerProfile.panNumber),
                       _buildInfoRow('Address', ownerProfile.address),
                       if (ownerProfile.lastSubmittedAt != null)
-                        _buildInfoRow('Submitted On', 
-                          Helpers.formatDate(ownerProfile.lastSubmittedAt!)
+                        _buildInfoRow('Submitted On',
+                            Helpers.formatDate(ownerProfile.lastSubmittedAt!)
                         ),
-                      
+
                       if (ownerProfile.additionalKyc != null) ...[
                         const SizedBox(height: 12),
-                        _buildInfoRow('Owner Name', 
-                          ownerProfile.additionalKyc!['ownerName'] ?? 
-                          ownerProfile.additionalKyc!['fullName'] ?? 'N/A'
+                        _buildInfoRow('Owner Name',
+                            ownerProfile.additionalKyc!['ownerName'] ??
+                                ownerProfile.additionalKyc!['fullName'] ?? 'N/A'
                         ),
-                        _buildInfoRow('Citizenship Number', 
-                          ownerProfile.additionalKyc!['citizenshipNumber'] ?? 'N/A'
+                        _buildInfoRow('Citizenship Number',
+                            ownerProfile.additionalKyc!['citizenshipNumber'] ?? 'N/A'
                         ),
-                        _buildInfoRow('Bank', 
-                          ownerProfile.additionalKyc!['bankName'] ?? 'N/A'
+                        _buildInfoRow('Bank',
+                            ownerProfile.additionalKyc!['bankName'] ?? 'N/A'
                         ),
                       ],
                     ],
@@ -403,7 +402,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Action Buttons
             if (status == 'PENDING') ...[
               Row(
@@ -451,10 +450,11 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
               AppButton(
                 text: 'Go to Dashboard',
                 onPressed: () {
-                  // context.go('/owner/dashboard');
+                  context.go('/owner/dashboard');
                 },
               ),
-            ] else if (status == 'INACTIVE') ...[
+            ] else ...[
+              // Catch-all for INACTIVE or any other status (New User)
               AppButton(
                 text: 'Start KYC Verification',
                 onPressed: () {
@@ -464,7 +464,18 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                 },
               ),
             ],
-            
+            // else if (status == 'INACTIVE' || ownerProfile == null) ...[  // ← CHANGED THIS LINE
+            //   // This button only shows for NEW users (no KYC submitted yet)
+            //   AppButton(
+            //     text: 'Start KYC Verification',
+            //     onPressed: () {
+            //       setState(() {
+            //         _showStatusPage = false; // Show KYC form
+            //       });
+            //     },
+            //   ),
+            // ],
+
             const SizedBox(height: 20),
           ],
         ),
@@ -473,35 +484,35 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
   }
 
   Widget _buildInfoRow(String label, String? value) { // Change to String?
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            '$label:',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value ?? 'N/A', // Handle null value
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value ?? 'N/A', // Handle null value
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   // KYC Form Widgets (existing code)
   Widget _buildKycForm() {
@@ -790,17 +801,17 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                 ),
                 child: file != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          file,
-                          fit: BoxFit.cover,
-                        ),
-                      )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    file,
+                    fit: BoxFit.cover,
+                  ),
+                )
                     : Icon(
-                        icon,
-                        size: 40,
-                        color: Colors.grey.shade400,
-                      ),
+                  icon,
+                  size: 40,
+                  color: Colors.grey.shade400,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -815,8 +826,8 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                     Text(
                       file != null ? 'Tap to change' : subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),
