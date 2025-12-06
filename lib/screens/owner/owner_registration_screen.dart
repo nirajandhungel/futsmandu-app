@@ -6,11 +6,13 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/owner_service.dart';
+import '../../utils/constants.dart';
 import '../../utils/theme.dart';
 import '../../utils/validators.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_textfield.dart';
+
 
 class OwnerKycScreen extends StatefulWidget {
   const OwnerKycScreen({super.key});
@@ -449,8 +451,30 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             ] else if (status == 'APPROVED') ...[
               AppButton(
                 text: 'Go to Dashboard',
-                onPressed: () {
-                  context.go('/owner/dashboard');
+                onPressed: () async {
+                  try {
+                    Helpers.showLoadingDialog(context);
+                    final ownerService = OwnerService();
+                    final authResponse = await ownerService.switchToOwnerMode();
+                    
+                    if (!context.mounted) return;
+                    Navigator.pop(context); // Close loading dialog
+                    
+                    // Update user in provider
+                    await context.read<AuthProvider>().updateUser(authResponse.user);
+                    
+                    if (!context.mounted) return;
+                    context.go(RouteNames.ownerDashboard);
+                  } catch (e) {
+                    if (context.mounted) {
+                      Navigator.pop(context); // Close loading dialog if error
+                      Helpers.showSnackbar(
+                        context, 
+                        'Failed to switch to owner mode: ${e.toString()}', 
+                        isError: true
+                      );
+                    }
+                  }
                 },
               ),
             ] else ...[

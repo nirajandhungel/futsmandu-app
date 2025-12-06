@@ -142,6 +142,37 @@ class OwnerService {
     }
   }
 
+  // Switch to Owner Mode (for already approved owners)
+  Future<AuthResponse> switchToOwnerMode() async {
+    try {
+      // Using ownerActivate endpoint but without KYC files since user is already approved
+      // The backend should handle this as a mode switch if the user is already APPROVED
+      final response = await _apiService.post<Map<String, dynamic>>(
+        AppConstants.ownerMode, // Updated to use inferred endpoint
+        data: {}, // Empty body for mode switch
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (!response.success || response.data == null) {
+        throw Exception(response.message ?? 'Failed to switch to owner mode');
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      final authResponse = AuthResponse.fromJson(data);
+      
+      await _storage.saveTokens(authResponse.tokens);
+      await _storage.saveUser(authResponse.user);
+      
+      return authResponse;
+    } catch (e) {
+       if (e is DioException) {
+        final message = e.response?.data?['message'] ?? e.message ?? 'Failed to switch to owner mode';
+        throw Exception(message);
+      }
+      throw Exception('Failed to switch to owner mode: ${e.toString()}');
+    }
+  }
+
   // Get Owner Profile
   Future<Map<String, dynamic>> getOwnerProfile() async {
     try {

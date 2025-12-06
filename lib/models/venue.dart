@@ -41,6 +41,15 @@ class Venue extends Equatable {
   });
 
   factory Venue.fromJson(Map<String, dynamic> json) {
+    // Handle ownerId whether it's a string (ID) or map (populated object)
+    String ownerIdStr = '';
+    if (json['ownerId'] is String) {
+      ownerIdStr = json['ownerId'] ?? '';
+    } else if (json['ownerId'] is Map) {
+      final ownerMap = json['ownerId'] as Map<String, dynamic>;
+      ownerIdStr = ownerMap['id'] ?? ownerMap['_id'] ?? '';
+    }
+
     return Venue(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
@@ -54,7 +63,7 @@ class Venue extends Equatable {
       rating: json['rating']?.toDouble(),
       totalReviews: json['totalReviews'],
       isActive: json['isActive'] ?? true,
-      ownerId: json['ownerId'] ?? '',
+      ownerId: ownerIdStr,
       amenities: json['amenities'] != null
           ? List<String>.from(json['amenities'])
           : null,

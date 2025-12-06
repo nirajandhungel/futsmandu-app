@@ -39,6 +39,7 @@ class AppConstants {
   static const String ownerActivate = '/owner/activate';
   static const String ownerDeactivate = '/owner/deactivate';
   static const String playerActivate = '/owner/player-mode';
+  static const String ownerMode = '/owner/owner-mode'; // Added inferred endpoint
   static const String ownerProfile = '/owner/profile';
   static const String ownerVenuesCreate = '/owner/venues';
   static const String ownerDashboard = '/owner/dashboard';
