@@ -41,6 +41,7 @@ dev_dependencies:
   mockito: ^5.4.4
   build_runner: ^2.4.7
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.4 
 
 flutter:
   uses-material-design: true
@@ -48,6 +49,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/icons/
+    - assets/logo/
 
   fonts:
     - family: Poppins
@@ -59,3 +61,11 @@ flutter:
           weight: 600
         - asset: assets/fonts/poppins/Poppins-Bold.ttf
           weight: 700
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/futsmandu_logo.png"
+  adaptive_icon_background: "#1E7F1E"
+  remove_alpha_ios: true
