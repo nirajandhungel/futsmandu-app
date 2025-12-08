@@ -109,5 +109,6 @@ class RouteNames {
   static const String myCourts = '/my-courts';
   static const String addCourt = '/add-court';
   static const String venueDetail = '/venue-detail';
+  static const String addVenue = '/add-venue';
 
 }

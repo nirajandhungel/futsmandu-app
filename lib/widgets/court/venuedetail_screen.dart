@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/venue.dart';
 import '../../utils/theme.dart';
-import 'bookscreen_ui.dart'; // Add this import
+import 'bookscreen_ui.dart';
 
 class VenueDetailScreen extends StatelessWidget {
   final Venue venue;
@@ -191,7 +191,6 @@ class VenueDetailScreen extends StatelessWidget {
                         ...venue.courts!.map((court) {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: AppTheme.primaryColor.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -199,41 +198,61 @@ class VenueDetailScreen extends StatelessWidget {
                                 color: AppTheme.primaryColor.withOpacity(0.2),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.sports_soccer,
-                                  color: AppTheme.primaryColor,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => BookingScreen(
+                                        venue: venue,
+                                        court: court,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        court.name,
-                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          fontWeight: FontWeight.w600,
+                                      const Icon(
+                                        Icons.sports_soccer,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              court.name,
+                                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              court.size,
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: AppTheme.textSecondary,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
                                       Text(
-                                        court.size,
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: AppTheme.textSecondary,
+                                        'Rs. ${court.hourlyRate.toStringAsFixed(0)}/hr',
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryColor,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Text(
-                                  'Rs. ${court.hourlyRate.toStringAsFixed(0)}/hr',
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           );
                         }).toList(),

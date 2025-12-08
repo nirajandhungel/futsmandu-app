@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../models/venue.dart';
 import '../../models/court.dart';
+import '../../models/booking.dart';
 import '../../utils/theme.dart';
+import '../../services/booking_service.dart';
 import 'package:intl/intl.dart';
 
 class BookingScreen extends StatefulWidget {
   final Venue venue;
+  final Court? court;
 
   const BookingScreen({
     super.key,
     required this.venue,
+    this.court,
   });
 
   @override
@@ -17,6 +21,7 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
+  final BookingService _bookingService = BookingService();
   int _currentStep = 0;
 
   // Form data
@@ -29,6 +34,16 @@ class _BookingScreenState extends State<BookingScreen> {
   int _maxPlayers = 10;
 
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.court != null) {
+      _selectedCourt = widget.court;
+      _currentStep = 1; // Skip court selection
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -760,74 +775,133 @@ class _BookingScreenState extends State<BookingScreen> {
         return '';
     }
   }
-
   Future<void> _createBooking() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Prepare booking data - EXACTLY matching backend requirements
-    final bookingData = {
-      'courtId': _selectedCourt!.id,
-      'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-      'startTime': '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}',
-      'endTime': '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}',
-      'bookingType': _bookingType,
-      'groupType': _groupType,
-      'maxPlayers': _maxPlayers,
-    };
-
-    print('Booking Data: $bookingData'); // For debugging
-
-    // TODO: Call your API here
-    // Example:
-    // try {
-    //   final response = await ApiService.createBooking(bookingData);
-    //   if (response.success) {
-    //     // Show success dialog
-    //   }
-    // } catch (e) {
-    //   // Show error message
-    //   if (mounted) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text('Error: ${e.toString()}')),
-    //     );
-    //   }
-    // }
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      // Show success dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          icon: const Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 64,
-          ),
-          title: const Text('Booking Created!'),
-          content: const Text(
-            'Your booking has been created successfully. Please complete the payment to confirm your booking.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Navigate back to home or bookings page
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-              child: const Text('Done'),
-            ),
-          ],
-        ),
+    try {
+      // Combine date and time to create accurate booking datetime
+      final DateTime fullBookingDate = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _startTime!.hour,
+        _startTime!.minute,
       );
+
+      final request = CreateBookingRequest(
+        courtId: _selectedCourt!.id,
+        bookingDate: fullBookingDate,
+        startTime: '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}',
+        endTime: '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}',
+        bookingType: _bookingType,
+        groupType: _bookingType != 'SOLO' ? _groupType : null,
+        maxPlayers: (_bookingType == 'FULL_TEAM' || _bookingType == 'PARTIAL_TEAM') ? _maxPlayers : null,
+        notes: null,
+      );
+
+      print('Sending booking request: ${request.toJson()}');
+
+      final booking = await _bookingService.createBooking(request);
+      print('✅ Booking created successfully in database');
+      print('📋 Booking ID: ${booking.id}');
+
+      if (mounted) {
+        // Show success dialog
+        try {
+          print('🔄 Building dialog...');
+          print('   Court: ${_selectedCourt?.name}');
+          print('   Date: $_selectedDate');
+          print('   Start time: ${request.startTime}');
+          print('   End time: ${request.endTime}');
+
+          // Test each widget individually
+          final courtText = 'Court: ${_selectedCourt?.name ?? "Not specified"}';
+          print('   Court text: $courtText');
+
+          final dateText = 'Date: ${DateFormat('MMM d, y').format(_selectedDate)}';
+          print('   Date text: $dateText');
+
+          final timeText = 'Time: ${request.startTime} - ${request.endTime}';
+          print('   Time text: $timeText');
+
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Booking Successful!'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 64,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Your booking for ${widget.venue.name} has been confirmed.'),
+                    const SizedBox(height: 8),
+                    Text(courtText),
+                    Text(dateText),
+                    Text(timeText),
+                    const SizedBox(height: 8),
+                    Text('Booking ID: ${booking.id}',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pop(); // Close booking screen
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            ),
+          );
+          print('✅ Dialog shown successfully');
+        } catch (dialogError, stackTrace) {
+          print('❌ Dialog error: $dialogError');
+          print('Stack trace: $stackTrace');
+          // Fallback to snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Booking created successfully! ID: ${booking.id}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          // Navigate back after showing snackbar
+          Future.delayed(Duration(seconds: 2), () {
+            if (mounted) Navigator.of(context).pop();
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ Booking error: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create booking: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
+
+
 }

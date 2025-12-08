@@ -1,12 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/booking.dart';
-import '../../models/court.dart';
-import '../../models/venue.dart';
 import '../../utils/theme.dart';
 import '../../widgets/common/loading.dart';
+import '../../services/booking_service.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -18,26 +16,22 @@ class MyBookingsScreen extends StatefulWidget {
 class _MyBookingsScreenState extends State<MyBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final BookingService _bookingService = BookingService();
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  
+  // Store bookings directly
+  List<Booking> _allBookings = [];
+  List<Booking> _upcomingBookings = [];
+  List<Booking> _completedBookings = [];
+  List<Booking> _cancelledBookings = [];
 
-  // Store bookings with their venue info separately
-  List<BookingWithVenue> _allBookings = [];
-  List<BookingWithVenue> _upcomingBookings = [];
-  List<BookingWithVenue> _completedBookings = [];
-  List<BookingWithVenue> _cancelledBookings = [];
-
-  int _currentPage = 1;
-  bool _hasMoreData = true;
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(_handleTabChange);
-    _scrollController.addListener(_onScroll);
-
+    
     // Load bookings when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadMyBookings();
@@ -51,24 +45,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     super.dispose();
   }
 
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      setState(() {
-        _currentPage = 1;
-        _hasMoreData = true;
-      });
-    }
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreBookings();
-      }
-    }
-  }
-
   Future<void> _loadMyBookings() async {
     if (_isLoading) return;
 
@@ -77,20 +53,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     });
 
     try {
-      // Simulate API call / load mock data
-      await Future.delayed(const Duration(milliseconds: 500));
-      final mockBookingsWithVenues = _generateMockBookingsWithVenues();
+      final bookings = await _bookingService.getUserBookings();
 
-      setState(() {
-        _allBookings = mockBookingsWithVenues;
-        _categorizeBookings();
-      });
+      if (mounted) {
+        setState(() {
+          _allBookings = bookings;
+          _categorizeBookings();
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading bookings: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Error loading bookings: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -103,50 +79,87 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     }
   }
 
-  Future<void> _loadMoreBookings() async {
-    if (_isLoadingMore || !_hasMoreData) return;
+  void _categorizeBookings() {
+    _upcomingBookings = _allBookings.where((booking) {
+      return (booking.isPending || booking.isConfirmed) && 
+             !booking.isCancelled && 
+             !booking.isCompleted;
+    }).toList();
 
-    setState(() {
-      _isLoadingMore = true;
-    });
+    _completedBookings = _allBookings.where((booking) {
+      return booking.isCompleted;
+    }).toList();
 
-    try {
-      // Simulate loading next page
-      await Future.delayed(const Duration(seconds: 1));
-      setState(() {
-        _currentPage++;
-        if (_currentPage > 3) {
-          _hasMoreData = false;
-        }
-      });
-    } catch (_) {
-      // ignore
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
-    }
+    _cancelledBookings = _allBookings.where((booking) {
+      return booking.isCancelled;
+    }).toList();
+
+    // Sort upcoming bookings by date (nearest first)
+    _upcomingBookings.sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+    
+    // Sort completed/cancelled by date (newest first)
+    _completedBookings.sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
+    _cancelledBookings.sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
+    _allBookings.sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
   }
 
-  void _categorizeBookings() {
-    final now = DateTime.now();
+  Future<void> _handleCancelBooking(Booking booking) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Booking'),
+        content: const Text(
+          'Are you sure you want to cancel this booking? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
 
-    _upcomingBookings = _allBookings.where((bookingWithVenue) {
-      final booking = bookingWithVenue.booking;
-      return !booking.isCancelled &&
-          !booking.isCompleted &&
-          booking.bookingDate.isAfter(now.subtract(const Duration(days: 1)));
-    }).toList();
+    if (confirmed != true) return;
 
-    _completedBookings = _allBookings.where((bookingWithVenue) {
-      return bookingWithVenue.booking.isCompleted;
-    }).toList();
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cancelling booking...')),
+        );
+      }
 
-    _cancelledBookings = _allBookings.where((bookingWithVenue) {
-      return bookingWithVenue.booking.isCancelled;
-    }).toList();
+      await _bookingService.cancelBooking(booking.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Booking cancelled successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadMyBookings(); // Reload list
+      }
+    } catch (e) {
+      print('Cancel error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel booking: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -161,22 +174,21 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      // OPTION 1: Explicit back button with custom behavior
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home'); // or your route name
-            }
-          }
+      title: const Text(
+        'My Bookings',
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
       ),
-      // OPTION 2: If you want automatic back button (comment out 'leading' above and uncomment below)
-      // automaticallyImplyLeading: true,
-
-      title: const Text('My Bookings'),
+      centerTitle: true,
+      backgroundColor: Colors.white,
       elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => context.go('/home'),
+      ),
       bottom: TabBar(
         controller: _tabController,
         isScrollable: false,
@@ -188,24 +200,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           fontSize: 14,
         ),
         tabs: [
-          Tab(
-            child: _buildTabLabel('All', _allBookings.length),
-          ),
-          Tab(
-            child: _buildTabLabel('Upcoming', _upcomingBookings.length),
-          ),
-          Tab(
-            child: _buildTabLabel('Completed', _completedBookings.length),
-          ),
-          Tab(
-            child: _buildTabLabel('Cancelled', _cancelledBookings.length),
-          ),
+          Tab(child: _buildTabLabel('All', _allBookings.length)),
+          Tab(child: _buildTabLabel('Upcoming', _upcomingBookings.length)),
+          Tab(child: _buildTabLabel('Completed', _completedBookings.length)),
+          Tab(child: _buildTabLabel('Cancelled', _cancelledBookings.length)),
         ],
       ),
     );
   }
 
-  // FIXED: Use Flexible to prevent Tab label overflow
   Widget _buildTabLabel(String label, int count) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -241,7 +244,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     return TabBarView(
       controller: _tabController,
       children: [
-        _buildBookingsList(_allBookings, 'No bookings yet'),
+        _buildBookingsList(_allBookings, 'No bookings found'),
         _buildBookingsList(_upcomingBookings, 'No upcoming bookings'),
         _buildBookingsList(_completedBookings, 'No completed bookings'),
         _buildBookingsList(_cancelledBookings, 'No cancelled bookings'),
@@ -249,7 +252,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  Widget _buildBookingsList(List<BookingWithVenue> bookings, String emptyMessage) {
+  Widget _buildBookingsList(List<Booking> bookings, String emptyMessage) {
     if (bookings.isEmpty) {
       return _buildEmptyState(emptyMessage);
     }
@@ -257,20 +260,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     return RefreshIndicator(
       onRefresh: _loadMyBookings,
       child: ListView.builder(
-        controller: _scrollController,
         padding: const EdgeInsets.all(AppTheme.paddingM),
-        itemCount: bookings.length + (_hasMoreData ? 1 : 0),
+        itemCount: bookings.length,
         itemBuilder: (context, index) {
-          if (index == bookings.length) {
-            return _buildLoadingMoreIndicator();
-          }
           return _buildBookingCard(bookings[index]);
         },
       ),
     );
   }
 
-  Widget _buildBookingCard(BookingWithVenue bookingWithVenue) {
+  Widget _buildBookingCard(Booking booking) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -286,19 +285,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       ),
       child: Column(
         children: [
-          _buildBookingHeader(bookingWithVenue),
+          _buildBookingHeader(booking),
           const Divider(height: 1),
-          _buildBookingDetails(bookingWithVenue),
-          _buildBookingActions(bookingWithVenue.booking),
+          _buildBookingDetails(booking),
+          _buildBookingActions(booking),
         ],
       ),
     );
   }
 
-  Widget _buildBookingHeader(BookingWithVenue bookingWithVenue) {
-    final booking = bookingWithVenue.booking;
-    final venue = bookingWithVenue.venue;
-
+  Widget _buildBookingHeader(Booking booking) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -306,14 +302,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         children: [
           _buildVenueIcon(),
           const SizedBox(width: 12),
-
-          // FIXED: make text area take available space and ellipsize
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  venue?.name ?? 'Venue Name',
+                  booking.venue?.name ?? 'Venue Name', 
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -322,8 +316,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  booking.court?.name ??
-                      'Court ${booking.court?.courtNumber ?? ""}',
+                  booking.court?.name ?? 'Court',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -333,14 +326,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
               ],
             ),
           ),
-
           const SizedBox(width: 8),
-
-          // FIXED: constrain status badge so it won't push layout
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 110),
-            child: _buildStatusBadge(booking.status),
-          ),
+          _buildStatusBadge(booking.status),
         ],
       ),
     );
@@ -413,10 +400,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  Widget _buildBookingDetails(BookingWithVenue bookingWithVenue) {
-    final booking = bookingWithVenue.booking;
-    final venue = bookingWithVenue.venue;
-
+  Widget _buildBookingDetails(Booking booking) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -433,20 +417,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             '${booking.startTime} - ${booking.endTime}',
           ),
           const SizedBox(height: 12),
-          _buildDetailRow(
-            Icons.location_on,
-            'Location',
-            '${venue?.address ?? ''}${venue?.city != null && venue!.city!.isNotEmpty ? ', ${venue.city}' : ''}',
-          ),
-          if (booking.notes != null && booking.notes!.isNotEmpty) ...[
+          if (booking.venue?.city != null) ...[
+            _buildDetailRow(
+              Icons.location_on,
+              'Location',
+              '${booking.venue!.address}, ${booking.venue!.city}',
+            ),
             const SizedBox(height: 12),
+          ],
+          if (booking.notes != null && booking.notes!.isNotEmpty) ...[
             _buildDetailRow(
               Icons.note,
               'Notes',
               booking.notes!,
             ),
+            const SizedBox(height: 16),
           ],
-          const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 16),
           Row(
@@ -471,6 +457,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                   ),
                 ],
               ),
+              _buildPaymentBadge(booking.paymentStatus),
             ],
           ),
         ],
@@ -563,8 +550,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           onPressed: () => _handleCancelBooking(booking),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            side: const BorderSide(color: Colors.red),
-            foregroundColor: Colors.red,
+            side: const BorderSide(color: AppTheme.errorColor),
+            foregroundColor: AppTheme.errorColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusS),
             ),
@@ -595,8 +582,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              // Navigate to browse courts
-              Navigator.pop(context);
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/dashboard');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
@@ -612,258 +602,4 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       ),
     );
   }
-
-  Widget _buildLoadingMoreIndicator() {
-    if (!_hasMoreData) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: Text(
-            'No more bookings to load',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: _isLoadingMore ? const CircularProgressIndicator() : const SizedBox.shrink(),
-      ),
-    );
-  }
-
-  String _formatBookingType(String bookingType) {
-    switch (bookingType.toUpperCase()) {
-      case 'FULL_TEAM':
-        return 'Full Team';
-      case 'PARTIAL_TEAM':
-        return 'Partial Team';
-      case 'SOLO':
-        return 'Solo';
-      default:
-        return bookingType;
-    }
-  }
-
-  String _formatStatus(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return 'Pending Confirmation';
-      case 'CONFIRMED':
-        return 'Confirmed';
-      case 'COMPLETED':
-        return 'Completed';
-      case 'CANCELLED':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  }
-
-  Future<void> _handleCancelBooking(Booking booking) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text(
-          'Are you sure you want to cancel this booking? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Yes, Cancel'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Booking cancelled successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Reload bookings
-        _loadMyBookings();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to cancel booking: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  // Mock data generator (remove in production)
-  List<BookingWithVenue> _generateMockBookingsWithVenues() {
-    final now = DateTime.now();
-
-    // Mock venues
-    final venue1 = Venue(
-      id: 'venue_1',
-      name: 'City Sports Arena With A Very Long Name To Test Ellipsis',
-      address: 'Koteshwor',
-      city: 'Kathmandu',
-      description: 'Premium futsal courts',
-      phoneNumber: '9801234567',
-      email: 'info@citysports.com',
-      rating: 4.5,
-      totalReviews: 120,
-      isActive: true,
-      ownerId: 'owner_1',
-      amenities: ['Parking', 'Changing Room', 'Cafe'],
-      images: ['https://example.com/image1.jpg'],
-    );
-
-    final venue2 = Venue(
-      id: 'venue_2',
-      name: 'Green Field Futsal',
-      address: 'Pulchowk',
-      city: 'Lalitpur',
-      description: 'Best futsal in town',
-      phoneNumber: '9807654321',
-      rating: 4.8,
-      totalReviews: 85,
-      isActive: true,
-      ownerId: 'owner_2',
-      amenities: ['Parking', 'Shower'],
-      images: ['https://example.com/image2.jpg'],
-    );
-
-    // Mock courts
-    final court1 = Court(
-      id: 'court_1',
-      name: 'Court A With A Long Name',
-      courtNumber: 'A',
-      size: '5v5',
-      hourlyRate: 2000,
-      isActive: true,
-      maxPlayers: 10,
-      futsalCourtId: venue1.id,
-      description: 'Main court',
-    );
-
-    final court2 = Court(
-      id: 'court_2',
-      name: 'Court B',
-      courtNumber: 'B',
-      size: '7v7',
-      hourlyRate: 3000,
-      isActive: true,
-      maxPlayers: 14,
-      futsalCourtId: venue2.id,
-      description: 'Large court',
-    );
-
-    // Mock bookings
-    final bookings = [
-      BookingWithVenue(
-        booking: Booking(
-          id: '1',
-          courtId: court1.id,
-          userId: 'user_1',
-          bookingDate: now.add(const Duration(days: 2)),
-          startTime: '11:00',
-          endTime: '12:00',
-          totalAmount: 2000,
-          status: 'PENDING',
-          notes: 'Morning session',
-          court: court1,
-          createdAt: now,
-          updatedAt: now,
-        ),
-        venue: venue1,
-      ),
-      BookingWithVenue(
-        booking: Booking(
-          id: '2',
-          courtId: court2.id,
-          userId: 'user_1',
-          bookingDate: now.subtract(const Duration(days: 5)),
-          startTime: '18:00',
-          endTime: '19:30',
-          totalAmount: 3000,
-          status: 'COMPLETED',
-          notes: null,
-          court: court2,
-          createdAt: now.subtract(const Duration(days: 6)),
-          updatedAt: now.subtract(const Duration(days: 5)),
-        ),
-        venue: venue2,
-      ),
-      BookingWithVenue(
-        booking: Booking(
-          id: '3',
-          courtId: court1.id,
-          userId: 'user_1',
-          bookingDate: now.add(const Duration(days: 5)),
-          startTime: '15:00',
-          endTime: '16:00',
-          totalAmount: 2000,
-          status: 'CONFIRMED',
-          notes: 'Afternoon game',
-          court: court1,
-          createdAt: now,
-          updatedAt: now,
-        ),
-        venue: venue1,
-      ),
-      BookingWithVenue(
-        booking: Booking(
-          id: '4',
-          courtId: court2.id,
-          userId: 'user_1',
-          bookingDate: now.subtract(const Duration(days: 2)),
-          startTime: '20:00',
-          endTime: '21:00',
-          totalAmount: 2500,
-          status: 'CANCELLED',
-          notes: 'Bad weather',
-          court: court2,
-          createdAt: now.subtract(const Duration(days: 3)),
-          updatedAt: now.subtract(const Duration(days: 2)),
-        ),
-        venue: venue2,
-      ),
-    ];
-
-    return bookings;
-  }
-}
-
-// ============================================================================
-// Helper class to pair booking with venue data
-// ============================================================================
-class BookingWithVenue {
-  final Booking booking;
-  final Venue? venue;
-
-  const BookingWithVenue({
-    required this.booking,
-    this.venue,
-  });
 }

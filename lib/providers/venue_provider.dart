@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/venue.dart';
 import '../models/court.dart';
 import '../services/venue_service.dart';
+import '../services/owner_service.dart';
 
 class VenueProvider with ChangeNotifier {
   final VenueService _venueService = VenueService();
+  final OwnerService _ownerService = OwnerService();
 
   List<Venue> _venues = [];
   Venue? _selectedVenue;
@@ -143,6 +146,53 @@ class VenueProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Create Venue
+  Future<bool> createVenue({
+    required String name,
+    required String address,
+    required String city,
+    required String phoneNumber,
+    required String email,
+    required String description,
+    required List<String> amenities,
+    required File imageFile,
+    required String courtName,
+    required double courtPrice,
+    required String courtSize,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _ownerService.createVenue(
+        name: name,
+        address: address,
+        city: city,
+        phoneNumber: phoneNumber,
+        email: email,
+        description: description,
+        amenities: amenities,
+        imageFile: imageFile,
+        courtName: courtName,
+        courtPrice: courtPrice,
+        courtSize: courtSize,
+      );
+      
+      // Refresh list
+      await getOwnerVenues();
+      
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 

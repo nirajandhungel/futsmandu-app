@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'user.dart';
 import 'court.dart';
+import 'venue.dart';
 
 class Booking extends Equatable {
   final String id;
@@ -11,8 +12,10 @@ class Booking extends Equatable {
   final String endTime;
   final double totalAmount;
   final String status;
+  final String paymentStatus;
   final String? notes;
   final Court? court;
+  final Venue? venue;
   final User? user;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -26,8 +29,10 @@ class Booking extends Equatable {
     required this.endTime,
     required this.totalAmount,
     required this.status,
+    this.paymentStatus = 'unpaid',
     this.notes,
     this.court,
+    this.venue,
     this.user,
     this.createdAt,
     this.updatedAt,
@@ -35,17 +40,21 @@ class Booking extends Equatable {
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
-      id: json['id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       courtId: json['courtId'] ?? '',
-      userId: json['userId'] ?? '',
-      bookingDate: DateTime.parse(json['bookingDate']),
+      userId: json['userId'] ?? json['createdBy'] ?? '',
+      bookingDate: DateTime.parse(json['date'] ?? json['bookingDate']),
       startTime: json['startTime'] ?? '',
       endTime: json['endTime'] ?? '',
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
       status: json['status'] ?? 'PENDING',
+      paymentStatus: json['paymentStatus'] ?? 'unpaid',
       notes: json['notes'],
       court: json['court'] != null ? Court.fromJson(json['court']) : null,
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      venue: json['venue'] != null ? Venue.fromJson(json['venue']) : null,
+      user: json['user'] != null 
+          ? User.fromJson(json['user']) 
+          : (json['creator'] != null ? User.fromJson(json['creator']) : null),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -60,13 +69,15 @@ class Booking extends Equatable {
       'id': id,
       'courtId': courtId,
       'userId': userId,
-      'bookingDate': bookingDate.toIso8601String(),
+      'date': bookingDate.toIso8601String(),
       'startTime': startTime,
       'endTime': endTime,
       'totalAmount': totalAmount,
       'status': status,
+      'paymentStatus': paymentStatus,
       'notes': notes,
       'court': court?.toJson(),
+      'venue': venue?.toJson(),
       'user': user?.toJson(),
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -82,8 +93,10 @@ class Booking extends Equatable {
     String? endTime,
     double? totalAmount,
     String? status,
+    String? paymentStatus,
     String? notes,
     Court? court,
+    Venue? venue,
     User? user,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -97,8 +110,10 @@ class Booking extends Equatable {
       endTime: endTime ?? this.endTime,
       totalAmount: totalAmount ?? this.totalAmount,
       status: status ?? this.status,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       notes: notes ?? this.notes,
       court: court ?? this.court,
+      venue: venue ?? this.venue,
       user: user ?? this.user,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -122,6 +137,7 @@ class Booking extends Equatable {
     status,
     notes,
     court,
+    venue,
     user,
     createdAt,
     updatedAt,
@@ -133,6 +149,9 @@ class CreateBookingRequest {
   final DateTime bookingDate;
   final String startTime;
   final String endTime;
+  final String bookingType;
+  final String? groupType;
+  final int? maxPlayers;
   final String? notes;
 
   const CreateBookingRequest({
@@ -140,15 +159,21 @@ class CreateBookingRequest {
     required this.bookingDate,
     required this.startTime,
     required this.endTime,
+    required this.bookingType,
+    this.groupType,
+    this.maxPlayers,
     this.notes,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'courtId': courtId,
-      'bookingDate': bookingDate.toIso8601String().split('T')[0],
+      'date': bookingDate.toIso8601String(), // Send full ISO string to include time component if possible
       'startTime': startTime,
       'endTime': endTime,
+      'bookingType': bookingType,
+      'groupType': groupType,
+      'maxPlayers': maxPlayers,
       'notes': notes,
     };
   }

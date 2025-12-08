@@ -192,32 +192,79 @@ class OwnerService {
   }
 
   // Create Venue
+  // Create Venue
   Future<Venue> createVenue({
     required String name,
     required String address,
     required String city,
-    String? description,
-    String? phoneNumber,
-    String? email,
+    required String phoneNumber,
+    required String email,
+    required String description,
+    required List<String> amenities,
+    required File imageFile,
+    required String courtName,
+    required double courtPrice,
+    required String courtSize,
     double? latitude,
     double? longitude,
-    List<String>? amenities,
-    List<String>? imagePaths,
   }) async {
     try {
-      final response = await _apiService.post<Map<String, dynamic>>(
-        AppConstants.ownerVenuesCreate,
-        data: {
-          'name': name,
+      // Prepare Opening Hours (Default 6AM - 10PM)
+      final defaultHours = {
+        'open': '06:00',
+        'close': '22:00',
+        'isOpen': true,
+      };
+      
+      final openingHours = {
+        'monday': defaultHours,
+        'tuesday': defaultHours,
+        'wednesday': defaultHours,
+        'thursday': defaultHours,
+        'friday': defaultHours,
+        'saturday': defaultHours,
+        'sunday': defaultHours,
+      };
+
+      // Create FormData
+      final formData = FormData.fromMap({
+        'name': name,
+        'description': description,
+        // Send complex objects as JSON strings to ensure they are parsed correctly
+        'location': jsonEncode({
           'address': address,
           'city': city,
-          if (description != null) 'description': description,
-          if (phoneNumber != null) 'phoneNumber': phoneNumber,
-          if (email != null) 'email': email,
-          if (latitude != null) 'latitude': latitude,
-          if (longitude != null) 'longitude': longitude,
-          if (amenities != null) 'amenities': amenities,
-        },
+          'coordinates': {
+            'latitude': latitude ?? 0.0,
+            'longitude': longitude ?? 0.0,
+          },
+        }),
+        'contact': jsonEncode({
+          'phone': phoneNumber,
+          'email': email,
+        }),
+        'amenities': jsonEncode(amenities),
+        'openingHours': jsonEncode(openingHours),
+        'courts': jsonEncode([
+          {
+            'name': courtName,
+            'courtNumber': '1', 
+            'size': courtSize,
+            'hourlyRate': courtPrice,
+            'maxPlayers': courtSize == '5v5' ? 10 : 14,
+            'isActive': true,
+            'description': 'Main Court',
+          }
+        ]),
+        'images': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        ),
+      });
+
+      final response = await _apiService.post<Map<String, dynamic>>(
+        AppConstants.ownerVenuesCreate,
+        data: formData,
         fromJson: (json) => json as Map<String, dynamic>,
       );
 

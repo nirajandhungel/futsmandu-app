@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (authProvider.user?.isInOwnerMode ?? false) {
             return FloatingActionButton.extended(
               onPressed: () {
-                Helpers.showSnackbar(context, 'Add court coming soon!');
+                context.push(RouteNames.addVenue);
               },
               icon: const Icon(Icons.add),
               label: const Text('Add Court'),
