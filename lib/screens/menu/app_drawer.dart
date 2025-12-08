@@ -7,7 +7,7 @@ import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../../screens/bookings/my_bookings_screen.dart';
-import '../bookings/my_bookings_screen.dart';
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -36,12 +36,12 @@ class AppDrawer extends StatelessWidget {
 
   // Future<void> _handleActivateOwnerMode(BuildContext context) async {
   //   Navigator.pop(context); // Close drawer first
-
+  //
   //   final authProvider = context.read<AuthProvider>();
   //   final user = authProvider.user;
-
+  //
   //   final ownerStatus = user?.ownerStatus?.toUpperCase();
-
+  //
   //   // Case 1: No owner profile at all (null) - First time user
   //   if (ownerStatus == null) {
   //     if (context.mounted) {
@@ -49,7 +49,7 @@ class AppDrawer extends StatelessWidget {
   //     }
   //     return;
   //   }
-
+  //
   //   // Case 2: DRAFT status - Incomplete KYC submission
   //   if (ownerStatus == 'DRAFT') {
   //     if (context.mounted) {
@@ -61,7 +61,7 @@ class AppDrawer extends StatelessWidget {
   //     }
   //     return;
   //   }
-
+  //
   //   // Case 3: PENDING status - Waiting for admin approval
   //   if (ownerStatus == 'PENDING') {
   //     if (context.mounted) {
@@ -74,7 +74,7 @@ class AppDrawer extends StatelessWidget {
   //     }
   //     return;
   //   }
-
+  //
   //   // Case 4: REJECTED status - Allow resubmission
   //   if (ownerStatus == 'REJECTED') {
   //     final resubmit = await Helpers.showConfirmDialog(
@@ -84,7 +84,7 @@ class AppDrawer extends StatelessWidget {
   //       confirmText: 'Resubmit',
   //       cancelText: 'Cancel',
   //     );
-
+  //
   //     if (resubmit && context.mounted) {
   //       context.push(RouteNames.OwnerKycScreen);
   //     } else if (context.mounted) {
@@ -92,7 +92,7 @@ class AppDrawer extends StatelessWidget {
   //     }
   //     return;
   //   }
-
+  //
   //   // Case 5: APPROVED status - Navigate to owner dashboard
   //   if (ownerStatus == 'APPROVED') {
   //     if (context.mounted) {
@@ -100,7 +100,7 @@ class AppDrawer extends StatelessWidget {
   //     }
   //     return;
   //   }
-
+  //
   //   // Fallback: Unknown status - navigate to KYC
   //   if (context.mounted) {
   //     context.push(RouteNames.OwnerKycScreen);
@@ -238,7 +238,7 @@ class AppDrawer extends StatelessWidget {
                 title: const Text('Join Teammates'),
                 onTap: () {
                   Navigator.pop(context);
-                  Helpers.showSnackbar(context, 'Find teammates coming soon!');
+                  context.go(RouteNames.joinTeammates);
                 },
               ),
 

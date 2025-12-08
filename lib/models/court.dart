@@ -25,6 +25,18 @@ class Court extends Equatable {
     this.createdAt,
   });
 
+  factory Court.empty() {
+    return const Court(
+      id: '',
+      name: '',
+      courtNumber: '',
+      size: '5v5',
+      hourlyRate: 0.0,
+      isActive: false,
+      maxPlayers: 10,
+    );
+  }
+
   factory Court.fromJson(Map<String, dynamic> json) {
     return Court(
       id: json['id'] ?? '',

@@ -102,12 +102,41 @@ class BookingService {
       throw Exception('Failed to get booking details: ${e.toString()}');
     }
   }
+  
+  // Get Joinable Bookings (Public)
+  Future<List<Booking>> getJoinableBookings() async {
+    try {
+      final response = await _apiService.get<Map<String, dynamic>>(
+        AppConstants.bookingsJoinable, // endpoints already added
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (!response.success || response.data == null) {
+        return [];
+      }
+
+      // Server returns: { groups: [...], count: ... }  <-- Updated based on actual API response
+      final data = response.data as Map<String, dynamic>;
+      // The API returns "groups" for joinable bookings
+      final bookingsList = (data['groups'] ?? data['bookings']) as List<dynamic>?;
+      
+      if (bookingsList == null) {
+        return [];
+      }
+
+      return bookingsList
+          .map((item) => Booking.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get joinable bookings: ${e.toString()}');
+    }
+  }
 
   // Join a booking
   Future<Booking> joinBooking(String bookingId) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        '${AppConstants.bookings}/$bookingId/join',
+        AppConstants.bookingJoin.replaceFirst('id', bookingId),
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -133,7 +162,7 @@ class BookingService {
   Future<Booking> leaveBooking(String bookingId) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        '${AppConstants.bookings}/$bookingId/leave',
+        AppConstants.bookingLeave.replaceFirst('id', bookingId),
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -159,7 +188,7 @@ class BookingService {
   Future<Booking> invitePlayers(String bookingId, List<String> userIds) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        '${AppConstants.bookings}/$bookingId/invite',
+        '${AppConstants.bookingInvite}/$bookingId',
         data: {'userIds': userIds},
         fromJson: (json) => json as Map<String, dynamic>,
       );

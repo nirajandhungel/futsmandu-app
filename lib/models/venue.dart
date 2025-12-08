@@ -40,6 +40,17 @@ class Venue extends Equatable {
     this.createdAt,
   });
 
+  factory Venue.empty() {
+    return const Venue(
+      id: '',
+      name: '',
+      address: '',
+      city: '',
+      isActive: false,
+      ownerId: '',
+    );
+  }
+
   factory Venue.fromJson(Map<String, dynamic> json) {
     // Handle ownerId whether it's a string (ID) or map (populated object)
     String ownerIdStr = '';

@@ -24,6 +24,7 @@ import 'widgets/court/venuedetail_screen.dart';
 import 'widgets/court/bookscreen_ui.dart';
 import 'models/venue.dart';
 import 'screens/bookings/my_bookings_screen.dart';
+import 'screens/bookings/join_teammates_screen.dart';
 import 'screens/court/add_venue_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -142,6 +143,10 @@ class FutsmanduApp extends StatelessWidget {
                 GoRoute(
                   path: RouteNames.mybookings,
                   builder: (context, state) => const MyBookingsScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.joinTeammates,
+                  builder: (context, state) => const JoinTeammatesScreen(),
                 ),
                 GoRoute(
                   path: RouteNames.addVenue,

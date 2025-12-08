@@ -6,12 +6,14 @@ class BookingProvider with ChangeNotifier {
   final BookingService _bookingService = BookingService();
 
   List<Booking> _bookings = [];
+  List<Booking> _joinableBookings = [];
   Booking? _selectedBooking;
 
   bool _isLoading = false;
   String? _errorMessage;
 
   List<Booking> get bookings => _bookings;
+  List<Booking> get joinableBookings => _joinableBookings;
   Booking? get selectedBooking => _selectedBooking;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -105,6 +107,16 @@ class BookingProvider with ChangeNotifier {
       if (index != -1) {
         _bookings[index] = updatedBooking;
       }
+      
+      // Also update joinable list if present
+      final joinIndex = _joinableBookings.indexWhere((b) => b.id == bookingId);
+      if (joinIndex != -1) {
+        if (updatedBooking.isCancelled) {
+           _joinableBookings.removeAt(joinIndex);
+        } else {
+           _joinableBookings[joinIndex] = updatedBooking;
+        }
+      }
 
       if (_selectedBooking?.id == bookingId) {
         _selectedBooking = updatedBooking;
@@ -195,5 +207,86 @@ class BookingProvider with ChangeNotifier {
   // Refresh Bookings
   Future<void> refreshBookings() async {
     await getUserBookings();
+    // Also refresh joinable bookings if we are viewing them
+    // await getJoinableBookings(); // Optional: depending on where this is called
+  }
+
+  // Get Joinable Bookings
+  Future<void> getJoinableBookings() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _joinableBookings = await _bookingService.getJoinableBookings();
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _joinableBookings = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Join Booking
+  Future<bool> joinBooking(String bookingId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedBooking = await _bookingService.joinBooking(bookingId);
+      
+      // Update in joinable list
+      final index = _joinableBookings.indexWhere((b) => b.id == bookingId);
+      if (index != -1) {
+        _joinableBookings[index] = updatedBooking;
+      }
+      
+      // Also maybe add to my bookings? Implementation choice.
+      // Usually "my bookings" API will return it next time it's called.
+      // We can manually add it to _bookings if we want instant feedback in other tabs
+      if (!_bookings.any((b) => b.id == bookingId)) {
+        _bookings.add(updatedBooking);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Leave Booking
+  Future<bool> leaveBooking(String bookingId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+       final updatedBooking = await _bookingService.leaveBooking(bookingId);
+      
+      // Update in joinable list
+      final index = _joinableBookings.indexWhere((b) => b.id == bookingId);
+      if (index != -1) {
+        _joinableBookings[index] = updatedBooking;
+      }
+
+      // Remove from my bookings
+      _bookings.removeWhere((b) => b.id == bookingId);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

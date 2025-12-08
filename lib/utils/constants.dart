@@ -30,10 +30,11 @@ class AppConstants {
   // Booking endpoints
   static const String bookings = '/bookings';
   static const String myBookings = '/bookings/my';
-  static const String bookingJoin = '/bookings'; // /:id/join
-  static const String bookingLeave = '/bookings'; // /:id/leave
-  static const String bookingInvite = '/bookings'; // /:id/invite
+  static const String bookingJoin = '/bookings/id/join'; // /:id/join
+  static const String bookingLeave = '/bookings/id/leave'; // /:id/leave
+  static const String bookingInvite = '/invitePlayers'; // /:id/invite
   static const String bookingCancel = '/bookings'; // /:id/cancel
+  static const String bookingsJoinable = '/bookings/joinable';
 
   // Owner endpoints
   static const String ownerActivate = '/owner/activate';
@@ -99,6 +100,7 @@ class RouteNames {
   static const String search = '/search';
   static const String courtDetail = '/court-detail';
   static const String booking = '/booking';  // You already have this
+  static const String joinTeammates = '/join-teammates';
   static const String mybookings = '/MyBookingsScreen';
   static const String bookingConfirmation = '/booking-confirmation';
   static const String profile = '/profile';

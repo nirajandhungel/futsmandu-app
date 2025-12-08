@@ -17,6 +17,8 @@ class Booking extends Equatable {
   final Court? court;
   final Venue? venue;
   final User? user;
+  final int? maxPlayers;
+  final List<User>? connectedBookingUsers;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -34,15 +36,17 @@ class Booking extends Equatable {
     this.court,
     this.venue,
     this.user,
+    this.maxPlayers,
+    this.connectedBookingUsers,
     this.createdAt,
     this.updatedAt,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
-      id: json['id'] ?? json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? json['bookingId'] ?? '',
       courtId: json['courtId'] ?? '',
-      userId: json['userId'] ?? json['createdBy'] ?? '',
+      userId: json['userId'] ?? json['createdBy'] ?? json['creatorId'] ?? '',
       bookingDate: DateTime.parse(json['date'] ?? json['bookingDate']),
       startTime: json['startTime'] ?? '',
       endTime: json['endTime'] ?? '',
@@ -50,11 +54,29 @@ class Booking extends Equatable {
       status: json['status'] ?? 'PENDING',
       paymentStatus: json['paymentStatus'] ?? 'unpaid',
       notes: json['notes'],
-      court: json['court'] != null ? Court.fromJson(json['court']) : null,
-      venue: json['venue'] != null ? Venue.fromJson(json['venue']) : null,
+      court: json['court'] != null 
+          ? Court.fromJson(json['court']) 
+          : (json['courtName'] != null
+              ? Court.empty().copyWith(name: json['courtName'], id: json['courtId'])
+              : null),
+      venue: json['venue'] != null 
+          ? Venue.fromJson(json['venue']) 
+          : (json['venueName'] != null
+              ? Venue.empty().copyWith(name: json['venueName'], city: json['location']?['city'] ?? '')
+              : null),
       user: json['user'] != null 
           ? User.fromJson(json['user']) 
-          : (json['creator'] != null ? User.fromJson(json['creator']) : null),
+          : (json['creator'] != null 
+              ? User.fromJson(json['creator']) 
+              : (json['creatorName'] != null
+                  ? User.empty().copyWith(fullName: json['creatorName'], id: json['creatorId'])
+                  : null)),
+      maxPlayers: json['maxPlayers'],
+      connectedBookingUsers: json['connectedBookingUsers'] != null
+          ? (json['connectedBookingUsers'] as List)
+              .map((u) => User.fromJson(u))
+              .toList()
+          : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -79,6 +101,8 @@ class Booking extends Equatable {
       'court': court?.toJson(),
       'venue': venue?.toJson(),
       'user': user?.toJson(),
+      'maxPlayers': maxPlayers,
+      'connectedBookingUsers': connectedBookingUsers?.map((u) => u.toJson()).toList(),
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };
@@ -98,6 +122,8 @@ class Booking extends Equatable {
     Court? court,
     Venue? venue,
     User? user,
+    int? maxPlayers,
+    List<User>? connectedBookingUsers,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -115,6 +141,8 @@ class Booking extends Equatable {
       court: court ?? this.court,
       venue: venue ?? this.venue,
       user: user ?? this.user,
+      maxPlayers: maxPlayers ?? this.maxPlayers,
+      connectedBookingUsers: connectedBookingUsers ?? this.connectedBookingUsers,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -139,6 +167,8 @@ class Booking extends Equatable {
     court,
     venue,
     user,
+    maxPlayers,
+    connectedBookingUsers,
     createdAt,
     updatedAt,
   ];

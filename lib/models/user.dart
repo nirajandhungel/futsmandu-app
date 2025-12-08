@@ -96,6 +96,17 @@ class User extends Equatable {
     this.updatedAt,
   });
 
+  factory User.empty() {
+    return const User(
+      id: '',
+      email: '',
+      fullName: '',
+      role: 'PLAYER',
+      mode: 'PLAYER',
+      isActive: false,
+    );
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] ?? '',
