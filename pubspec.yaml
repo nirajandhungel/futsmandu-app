@@ -35,6 +35,8 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.6
 
+  
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -52,15 +54,20 @@ flutter:
     - assets/logo/
 
   fonts:
-    - family: Poppins
+    - family: Rubik
       fonts:
-        - asset: assets/fonts/poppins/Poppins-Regular.ttf
-        - asset: assets/fonts/poppins/Poppins-Medium.ttf
+        - asset: assets/fonts/Rubik-Regular.ttf
+        - asset: assets/fonts/Rubik-Medium.ttf
           weight: 500
-        - asset: assets/fonts/poppins/Poppins-SemiBold.ttf
+        - asset: assets/fonts/Rubik-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/poppins/Poppins-Bold.ttf
+        - asset: assets/fonts/Rubik-Bold.ttf
           weight: 700
+    - family: OpenSans
+      fonts:
+        - asset: assets/fonts/OpenSans-Regular.ttf
+        - asset: assets/fonts/OpenSans-SemiBold.ttf
+          weight: 600
 
 
 flutter_launcher_icons:
