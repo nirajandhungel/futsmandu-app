@@ -88,9 +88,9 @@ class ProfileScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppTheme.paddingL),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: const BorderRadius.only(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.darkPrimaryColor,
+                    borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(AppTheme.radiusXL),
                       bottomRight: Radius.circular(AppTheme.radiusXL),
                     ),
@@ -281,9 +281,9 @@ class ProfileScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
+        // color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
-        border: Border.all(color: AppTheme.dividerColor),
+        border: Border.all(color: AppTheme.dividerColorDark),
       ),
       child: Row(
         children: [
@@ -300,7 +300,7 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -346,4 +346,5 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
 }

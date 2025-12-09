@@ -167,7 +167,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
                   provider.errorMessage!,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -189,7 +189,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
               'No venues found in Lalitpur',
               style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
           );
@@ -230,7 +230,7 @@ class _LalitpurFutsalScreenState extends State<LalitpurFutsalScreen> {
           child: Text(
             'No more venues in Lalitpur',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSecondaryDark,
             ),
           ),
         ),

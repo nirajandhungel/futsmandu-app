@@ -24,8 +24,8 @@ class Venue extends Equatable {
   const Venue({
     required this.id,
     required this.name,
-    required this.address,
-    required this.city,
+    this.address,
+    this.city,
     this.description,
     this.phoneNumber,
     this.email,

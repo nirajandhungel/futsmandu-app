@@ -34,78 +34,7 @@ class AppDrawer extends StatelessWidget {
     Helpers.showSnackbar(context, 'Logged out successfully');
   }
 
-  // Future<void> _handleActivateOwnerMode(BuildContext context) async {
-  //   Navigator.pop(context); // Close drawer first
-  //
-  //   final authProvider = context.read<AuthProvider>();
-  //   final user = authProvider.user;
-  //
-  //   final ownerStatus = user?.ownerStatus?.toUpperCase();
-  //
-  //   // Case 1: No owner profile at all (null) - First time user
-  //   if (ownerStatus == null) {
-  //     if (context.mounted) {
-  //       context.push(RouteNames.OwnerKycScreen);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // Case 2: DRAFT status - Incomplete KYC submission
-  //   if (ownerStatus == 'DRAFT') {
-  //     if (context.mounted) {
-  //       Helpers.showSnackbar(
-  //         context,
-  //         'Please complete your KYC verification',
-  //       );
-  //       context.push(RouteNames.OwnerKycScreen);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // Case 3: PENDING status - Waiting for admin approval
-  //   if (ownerStatus == 'PENDING') {
-  //     if (context.mounted) {
-  //       Helpers.showSnackbar(
-  //         context,
-  //         'Your verification is pending. Please wait for admin approval.',
-  //         isError: true,
-  //       );
-  //       context.go(RouteNames.home);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // Case 4: REJECTED status - Allow resubmission
-  //   if (ownerStatus == 'REJECTED') {
-  //     final resubmit = await Helpers.showConfirmDialog(
-  //       context,
-  //       title: 'KYC Rejected',
-  //       message: 'Your previous KYC was rejected. Would you like to resubmit?',
-  //       confirmText: 'Resubmit',
-  //       cancelText: 'Cancel',
-  //     );
-  //
-  //     if (resubmit && context.mounted) {
-  //       context.push(RouteNames.OwnerKycScreen);
-  //     } else if (context.mounted) {
-  //       context.go(RouteNames.home);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // Case 5: APPROVED status - Navigate to owner dashboard
-  //   if (ownerStatus == 'APPROVED') {
-  //     if (context.mounted) {
-  //       context.go(RouteNames.ownerDashboard);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // Fallback: Unknown status - navigate to KYC
-  //   if (context.mounted) {
-  //     context.push(RouteNames.OwnerKycScreen);
-  //   }
-  // }
+ 
 
   Future<void> _handleDeactivateOwnerMode(BuildContext context) async {
     final confirmed = await Helpers.showConfirmDialog(
@@ -176,7 +105,7 @@ class AppDrawer extends StatelessWidget {
             children: [
               UserAccountsDrawerHeader(
                 decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.darkPrimaryColor,
                 ),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white,

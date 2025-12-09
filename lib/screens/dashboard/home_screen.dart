@@ -1,3 +1,4 @@
+// home_screen.dart (Final version with Material Icons)
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,6 @@ import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../../widgets/common/loading.dart';
 import '../../widgets/court/venue_card.dart';
-import '../../widgets/court/venuedetail_screen.dart';
 import '../menu/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +27,38 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentPage = 1;
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
+
+  // Dashboard quick actions
+  final List<DashboardAction> _quickActions = [
+    DashboardAction(
+      icon: Icons.calendar_today,
+      title: 'My Bookings',
+      subtitle: 'View upcoming bookings',
+      route: RouteNames.mybookings,
+      color: Color(0xFF2196F3), // Blue
+    ),
+    DashboardAction(
+      icon: Icons.group,
+      title: 'Join Teammates',
+      subtitle: 'Find playing partners',
+      route: RouteNames.joinTeammates,
+      color: Color(0xFF4CAF50), // Green
+    ),
+    DashboardAction(
+      icon: Icons.payment,
+      title: 'My Payments',
+      subtitle: 'Payment history & wallet',
+      route: RouteNames.mybookings,
+      color: Color(0xFF9C27B0), // Purple
+    ),
+    DashboardAction(
+      icon: Icons.emoji_events,
+      title: 'Active Tournaments',
+      subtitle: 'Join competitions',
+      route: RouteNames.mybookings,
+      color: Color(0xFFFF9800), // Orange
+    ),
+  ];
 
   @override
   void initState() {
@@ -86,18 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      // TODO: When you have real API with pagination, call it like this:
-      // final venueProvider = context.read<VenueProvider>();
-      // if (_searchCity.isEmpty && _searchController.text.isEmpty) {
-      //   await venueProvider.getAllVenues(page: _currentPage + 1);
-      // } else {
-      //   await venueProvider.searchVenues(
-      //     city: _searchCity.isNotEmpty ? _searchCity : null,
-      //     name: _searchController.text.isNotEmpty ? _searchController.text : null,
-      //     page: _currentPage + 1,
-      //   );
-      // }
-
       // Simulate API call delay for now
       await Future.delayed(const Duration(seconds: 1));
 
@@ -127,12 +147,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _searchVenues() async {
-    await _loadVenues(); // Reuse the same logic
+    await _loadVenues();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 34, 35, 34), 
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
@@ -142,8 +163,30 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        title: const Text('FUTSMANDU'),
-        centerTitle: true,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, _) {
+                final user = authProvider.user;
+                return Text(
+                  'Hello, ${user?.fullName.split(' ').first ?? 'Guest'}!',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
+                  ),
+                );
+              },
+            ),
+            const Text(
+              'FUTSMANDU',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -153,15 +196,24 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Consumer<AuthProvider>(
                 builder: (context, authProvider, _) {
-                  return CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      authProvider.user?.fullName.isNotEmpty ?? false
-                          ? authProvider.user!.fullName[0].toUpperCase()
-                          : 'U',
-                      style: const TextStyle(
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
                         color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      backgroundColor: AppTheme.backgroundDark,
+                      child: Text(
+                        authProvider.user?.fullName.isNotEmpty ?? false
+                            ? authProvider.user!.fullName[0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   );
@@ -172,15 +224,66 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       drawer: const AppDrawer(),
-      body: Column(
-        children: [
-          _buildSearchHeader(),
-          Expanded(child: _buildBodyContent()),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadVenues,
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // Search Section
+            SliverToBoxAdapter(
+              child: _buildSearchSection(),
+            ),
+            // Welcome Banner
+            SliverToBoxAdapter(
+              child: _buildWelcomeBanner(),
+            ),
+
+            // Quick Actions Section
+            SliverToBoxAdapter(
+              child: _buildQuickActions(),
+            ),
+
+
+            // Featured Venues Section
+            SliverToBoxAdapter(
+              child: _buildFeaturedSection(),
+            ),
+
+            // All Venues Grid
+            // _buildVenuesGrid(),
+
+            // Loading indicator
+            if (_isLoadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.0),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+
+            // "No more data" indicator
+            if (!_hasMoreData && _currentPage > 1)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 20.0),
+                  child: Center(
+                    child: Text(
+                      'No more venues to load',
+                      style: TextStyle(
+                        color: AppTheme.textSecondaryDark,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
       floatingActionButton: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          // Show "Add Court" button only when user is in owner mode
           if (authProvider.user?.isInOwnerMode ?? false) {
             return FloatingActionButton.extended(
               onPressed: () {
@@ -188,6 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               icon: const Icon(Icons.add),
               label: const Text('Add Court'),
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: AppTheme.buttonPrimaryText,
             );
           }
           return const SizedBox.shrink();
@@ -196,77 +301,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCityChip(String label, String value) {
-    final isSelected = _searchCity == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (selected) {
-          setState(() {
-            _searchCity = value; // Set the selected city (empty for "All")
-          });
-          _searchVenues(); // Fetch venues based on the selected city
-        },
-        selectedColor: Color.fromRGBO(
-          AppTheme.primaryColor.red,
-          AppTheme.primaryColor.green,
-          AppTheme.primaryColor.blue,
-          0.2,
-        ),
-      ),
-    );
-  }
 
-  Widget _buildSearchHeader() {
+    Widget _buildSearchSection() {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.paddingM),
-      color: AppTheme.surfaceColor,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColorDark,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(color: AppTheme.dividerColorDark),
+      ),
       child: Column(
         children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search venues by name',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                  _searchVenues();
-                },
-              )
-                  : null,
-            ),
-            onSubmitted: (_) => _searchVenues(),
-            onChanged: (_) {
-              setState(() {}); // Update UI to show/hide clear button
-            },
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              const Text(
-                'City: ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+              const Icon(
+                Icons.search,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: AppTheme.textPrimaryDark),
+                  decoration: InputDecoration(
+                    hintText: 'Search venues by name...',
+                    hintStyle: const TextStyle(color: AppTheme.textTertiaryDark),
+                    border: InputBorder.none,
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            color: AppTheme.textTertiaryDark,
+                            onPressed: () {
+                              _searchController.clear();
+                              _searchVenues();
+                            },
+                          )
+                        : null,
+                  ),
+                  onSubmitted: (_) => _searchVenues(),
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildCityChip('All', ''),
-                      _buildCityChip('Kathmandu', 'Kathmandu'),
-                      _buildCityChip('Lalitpur', 'Lalitpur'),
-                      _buildCityChip('Bhaktapur', 'Bhaktapur'),
-                    ],
-                  ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filter by City:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimaryDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildCityChip('All', ''),
+                    const SizedBox(width: 8),
+                    _buildCityChip('Kathmandu', 'Kathmandu'),
+                    const SizedBox(width: 8),
+                    _buildCityChip('Lalitpur', 'Lalitpur'),
+                    const SizedBox(width: 8),
+                    _buildCityChip('Bhaktapur', 'Bhaktapur'),
+                  ],
                 ),
               ),
             ],
@@ -276,131 +379,393 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBodyContent() {
-    return Consumer<VenueProvider>(
-      builder: (context, provider, _) {
-        if (provider.isSearching && _currentPage == 1) {
-          return const LoadingWidget(message: 'Loading venues...');
-        }
 
-        if (provider.errorMessage != null && _currentPage == 1) {
-          return Center(
+  Widget _buildWelcomeBanner() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryColor,
+            AppTheme.darkPrimaryColor,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: AppTheme.errorColor,
-                ),
-                const SizedBox(height: 16),
                 Text(
-                  provider.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textSecondary,
+                  'Ready to play?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.buttonPrimaryText,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  'Book your favorite futsal court in seconds',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.buttonPrimaryText.withOpacity(0.9),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
-                    provider.clearError();
-                    _loadVenues();
+                    _scrollController.animateTo(
+                      400,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                    );
                   },
-                  child: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.buttonPrimaryText,
+                    foregroundColor: AppTheme.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    ),
+                  ),
+                  child: const Text('Explore Courts'),
                 ),
               ],
             ),
-          );
-        }
+          ),
+          const SizedBox(width: 20),
+          const Icon(
+            Icons.sports_soccer,
+            size: 60,
+            color: AppTheme.buttonPrimaryText,
+          ),
+        ],
+      ),
+    );
+  }
 
-        if (provider.venues.isEmpty && _currentPage == 1) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.search_off,
-                  size: 64,
-                  color: AppTheme.textSecondary.withOpacity(0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _searchCity.isEmpty && _searchController.text.isEmpty
-                      ? 'No venues available'
-                      : 'No venues found matching your search',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                if (_searchCity.isNotEmpty || _searchController.text.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _searchCity = '';
-                        _searchController.clear();
-                      });
-                      _loadVenues();
-                    },
-                    child: const Text('Clear filters'),
-                  ),
-                ],
-              ],
+  Widget _buildQuickActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Quick Actions',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimaryDark,
             ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: _loadVenues,
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(AppTheme.paddingM),
-            itemCount: provider.venues.length + (_hasMoreData ? 1 : 0),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.4,
+            ),
+            itemCount: _quickActions.length,
             itemBuilder: (context, index) {
-              // Show loading indicator at the bottom
-              if (index == provider.venues.length) {
-                return _buildLoadingMoreIndicator();
-              }
-
-              return VenueCard(
-                venue: provider.venues[index],
+              final action = _quickActions[index];
+              return GestureDetector(
                 onTap: () {
-                  context.push(RouteNames.venueDetail, extra: provider.venues[index]);
+                  context.push(action.route);
                 },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColorDark,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    border: Border.all(
+                      color: AppTheme.dividerColorDark.withOpacity(0.3),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: action.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                        ),
+                        child: Icon(
+                          action.icon,
+                          color: action.color,
+                          size: 24,
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            action.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimaryDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            action.subtitle,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textTertiaryDark,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildCityChip(String label, String value) {
+    final isSelected = _searchCity == value;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? AppTheme.buttonPrimaryText : AppTheme.textPrimaryDark,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.backgroundDark,
+      side: BorderSide(color: AppTheme.dividerColorDark),
+      onSelected: (selected) {
+        setState(() {
+          _searchCity = selected ? value : '';
+          _searchVenues();
+        });
+      },
+    );
+  }
+
+  Widget _buildFeaturedSection() {
+    return Consumer<VenueProvider>(
+      builder: (context, provider, _) {
+        if (provider.venues.isEmpty) return const SizedBox.shrink();
+        
+        final featuredVenues = provider.venues.take(3).toList();
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Featured Courts',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to all venues or featured list
+                    },
+                    child: Text(
+                      'See All',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: featuredVenues.map((venue) {
+                    return Container(
+                      width: 280,
+                      margin: const EdgeInsets.only(right: 12),
+                      child: VenueCard(
+                        venue: venue,
+                        onTap: () {
+                          context.push(RouteNames.venueDetail, extra: venue);
+                        },
+                        // featured: true,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildLoadingMoreIndicator() {
-    if (!_hasMoreData) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: Text(
-            'No more venues to load',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ),
-      );
-    }
+  // Widget _buildVenuesGrid() {
+  //   return Consumer<VenueProvider>(
+  //     builder: (context, provider, _) {
+  //       if (provider.isSearching && _currentPage == 1) {
+  //         return const SliverFillRemaining(
+  //           child: LoadingWidget(message: 'Loading venues...'),
+  //         );
+  //       }
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: _isLoadingMore
-            ? const CircularProgressIndicator()
-            : const SizedBox.shrink(),
-      ),
-    );
-  }
+  //       if (provider.errorMessage != null && _currentPage == 1) {
+  //         return SliverFillRemaining(
+  //           child: Center(
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 const Icon(
+  //                   Icons.error,
+  //                   size: 64,
+  //                   color: AppTheme.errorColor,
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 Text(
+  //                   provider.errorMessage!,
+  //                   textAlign: TextAlign.center,
+  //                   style: const TextStyle(
+  //                     fontSize: 16,
+  //                     color: AppTheme.textSecondaryDark,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 ElevatedButton(
+  //                   onPressed: () {
+  //                     provider.clearError();
+  //                     _loadVenues();
+  //                   },
+  //                   child: const Text('Retry'),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
+
+  //       if (provider.venues.isEmpty && _currentPage == 1) {
+  //         return SliverFillRemaining(
+  //           child: Center(
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 const Icon(
+  //                   Icons.search,
+  //                   size: 64,
+  //                   color: AppTheme.textSecondaryDark,
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 const Text(
+  //                   'No venues found',
+  //                   style: TextStyle(
+  //                     fontSize: 18,
+  //                     fontWeight: FontWeight.w600,
+  //                     color: AppTheme.textPrimaryDark,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 8),
+  //                 Text(
+  //                   _searchCity.isNotEmpty || _searchController.text.isNotEmpty
+  //                       ? 'Try adjusting your search filters'
+  //                       : 'Be the first to add a venue!',
+  //                   textAlign: TextAlign.center,
+  //                   style: const TextStyle(
+  //                     fontSize: 14,
+  //                     color: AppTheme.textTertiaryDark,
+  //                   ),
+  //                 ),
+  //                 if (_searchCity.isNotEmpty || _searchController.text.isNotEmpty) ...[
+  //                   const SizedBox(height: 16),
+  //                   ElevatedButton(
+  //                     onPressed: () {
+  //                       setState(() {
+  //                         _searchCity = '';
+  //                         _searchController.clear();
+  //                       });
+  //                       _loadVenues();
+  //                     },
+  //                     child: const Text('Clear Filters'),
+  //                   ),
+  //                 ],
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
+
+  //       return SliverPadding(
+  //         padding: const EdgeInsets.all(16),
+  //         sliver: SliverGrid(
+  //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //             crossAxisCount: 2,
+  //             crossAxisSpacing: 12,
+  //             mainAxisSpacing: 12,
+  //             childAspectRatio: 0.85,
+  //           ),
+  //           delegate: SliverChildBuilderDelegate(
+  //             (context, index) {
+  //               if (index >= provider.venues.length) {
+  //                 return const SizedBox.shrink();
+  //               }
+                
+  //               final venue = provider.venues[index];
+  //               return VenueCard(
+  //                 venue: venue,
+  //                 onTap: () {
+  //                   context.push(RouteNames.venueDetail, extra: venue);
+  //                 },
+  //               );
+  //             },
+  //             childCount: provider.venues.length,
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+
+
+}
+
+class DashboardAction {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String route;
+  final Color color;
+
+  DashboardAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.route,
+    required this.color,
+  });
 }

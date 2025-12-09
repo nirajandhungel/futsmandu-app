@@ -108,6 +108,17 @@ class User extends Equatable {
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Try to get ownerStatus from root first, then from ownerProfile
+  String? ownerStatus;
+  
+  // First check if ownerStatus exists at root level
+  if (json['ownerStatus'] != null) {
+    ownerStatus = json['ownerStatus'].toString().toUpperCase();
+  }
+  // If not at root, check inside ownerProfile
+  else if (json['ownerProfile'] != null && json['ownerProfile']['status'] != null) {
+    ownerStatus = json['ownerProfile']['status'].toString().toUpperCase();
+  }
     return User(
       id: json['id'] ?? '',
       email: json['email'] ?? '',
@@ -120,7 +131,7 @@ class User extends Equatable {
                   ? 'OWNER'
                   : 'PLAYER')),
       phoneNumber: json['phoneNumber'],
-      ownerStatus: json['ownerStatus']?.toString().toUpperCase(),
+      ownerStatus: ownerStatus,
       ownerProfile: json['ownerProfile'] != null
           ? OwnerProfile.fromJson(json['ownerProfile'])
           : null,

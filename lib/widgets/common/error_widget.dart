@@ -74,13 +74,13 @@ class EmptyStateWidget extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSecondaryDark,
             ),
             const SizedBox(height: 16),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
               textAlign: TextAlign.center,
             ),

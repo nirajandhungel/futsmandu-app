@@ -69,7 +69,7 @@ class VenueDetailScreen extends StatelessWidget {
                               Text(
                                 ' (${venue.totalReviews} reviews)',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.textSecondary,
+                                  color: AppTheme.textSecondaryDark,
                                 ),
                               ),
                             ],
@@ -139,7 +139,7 @@ class VenueDetailScreen extends StatelessWidget {
                               const Icon(
                                 Icons.phone,
                                 size: 18,
-                                color: AppTheme.textSecondary,
+                                color: AppTheme.textSecondaryDark,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -156,7 +156,7 @@ class VenueDetailScreen extends StatelessWidget {
                               const Icon(
                                 Icons.email,
                                 size: 18,
-                                color: AppTheme.textSecondary,
+                                color: AppTheme.textSecondaryDark,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -236,7 +236,7 @@ class VenueDetailScreen extends StatelessWidget {
                                             Text(
                                               court.size,
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: AppTheme.textSecondary,
+                                                color: AppTheme.textSecondaryDark,
                                               ),
                                             ),
                                           ],

@@ -167,7 +167,7 @@ class _KathmanduFutsalScreenState extends State<KathmanduFutsalScreen> {
                   provider.errorMessage!,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -189,7 +189,7 @@ class _KathmanduFutsalScreenState extends State<KathmanduFutsalScreen> {
               'No venues found in Kathmandu',
               style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
           );
@@ -230,7 +230,7 @@ class _KathmanduFutsalScreenState extends State<KathmanduFutsalScreen> {
           child: Text(
             'No more venues in Kathmandu',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSecondaryDark,
             ),
           ),
         ),

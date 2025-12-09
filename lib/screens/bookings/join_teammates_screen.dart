@@ -110,13 +110,13 @@ class _JoinTeammatesScreenState extends State<JoinTeammatesScreen> {
                   const Icon(
                     Icons.groups_outlined,
                     size: 64,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'No open games to join at the moment.',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.textSecondaryDark,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -181,12 +181,12 @@ class _JoinTeammatesScreenState extends State<JoinTeammatesScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 14, color: AppTheme.textSecondary),
+                          const Icon(Icons.location_on, size: 14, color: AppTheme.textSecondaryDark),
                           const SizedBox(width: 4),
                           Text(
                             booking.venue?.city ?? 'City',
                             style: const TextStyle(
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.textSecondaryDark,
                               fontSize: 12,
                             ),
                           ),
@@ -290,7 +290,7 @@ class _JoinTeammatesScreenState extends State<JoinTeammatesScreen> {
         Text(
           label,
           style: const TextStyle(
-            color: AppTheme.textSecondary,
+            color: AppTheme.textSecondaryDark,
             fontSize: 11,
           ),
         ),

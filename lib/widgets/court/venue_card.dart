@@ -60,14 +60,14 @@ class VenueCard extends StatelessWidget {
                   const Icon(
                     Icons.location_on_outlined,
                     size: 16,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${venue.address}, ${venue.city}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryDark,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

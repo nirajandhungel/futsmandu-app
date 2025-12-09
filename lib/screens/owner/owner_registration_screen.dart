@@ -354,7 +354,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             Text(
               config['message'] as String,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -455,19 +455,30 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                   try {
                     Helpers.showLoadingDialog(context);
                     final ownerService = OwnerService();
-                    final authResponse = await ownerService.switchToOwnerMode();
+                    final switchResponse = await ownerService.switchToOwnerMode();
                     
                     if (!context.mounted) return;
                     Navigator.pop(context); // Close loading dialog
                     
                     // Update user in provider
-                    await context.read<AuthProvider>().updateUser(authResponse.user);
+                    await context.read<AuthProvider>().updateUser(switchResponse.user);
                     
-                    if (!context.mounted) return;
-                    context.go(RouteNames.ownerDashboard);
+                    // check if user in owner mode 
+                    if (switchResponse.user.isInOwnerMode) {
+                      if (!context.mounted) return;
+                      context.go(RouteNames.ownerDashboard);
+                    } else {
+                      // Even after switching, mode might still be player
+                      // This could happen if the backend doesn't update mode immediately
+                      Helpers.showSnackbar(
+                        context, 
+                        'Please try switching mode again', 
+                        isError: true
+                      );
+                    }
                   } catch (e) {
                     if (context.mounted) {
-                      Navigator.pop(context); // Close loading dialog if error
+                      Navigator.pop(context);
                       Helpers.showSnackbar(
                         context, 
                         'Failed to switch to owner mode: ${e.toString()}', 
@@ -488,17 +499,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                 },
               ),
             ],
-            // else if (status == 'INACTIVE' || ownerProfile == null) ...[  // ← CHANGED THIS LINE
-            //   // This button only shows for NEW users (no KYC submitted yet)
-            //   AppButton(
-            //     text: 'Start KYC Verification',
-            //     onPressed: () {
-            //       setState(() {
-            //         _showStatusPage = false; // Show KYC form
-            //       });
-            //     },
-            //   ),
-            // ],
+        
 
             const SizedBox(height: 20),
           ],
@@ -517,8 +518,8 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             flex: 2,
             child: Text(
               '$label:',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
+              style:const TextStyle(
+                color: AppTheme.textSecondaryDark,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -653,7 +654,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             Text(
               'Enter your futsal court details',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
             const SizedBox(height: 24),
@@ -708,7 +709,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             Text(
               'Additional verification information',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
             const SizedBox(height: 24),
@@ -766,7 +767,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
             Text(
               'Upload required verification documents',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
             const SizedBox(height: 24),
@@ -850,7 +851,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
                     Text(
                       file != null ? 'Tap to change' : subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryDark,
                       ),
                     ),
                   ],

@@ -196,7 +196,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         Text(
                           court.size!,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.textSecondaryDark,
                           ),
                         ),
                       ],
@@ -216,7 +216,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     Text(
                       'per hour',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryDark,
                       ),
                     ),
                   ],
@@ -311,7 +311,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       Text(
                         'Start Time',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSecondaryDark,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -353,7 +353,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       Text(
                         'End Time',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSecondaryDark,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -543,7 +543,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.textSecondaryDark,
                     ),
                   ),
                 ],
@@ -688,7 +688,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
                 const SizedBox(height: 2),

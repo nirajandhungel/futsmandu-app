@@ -167,7 +167,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
                   provider.errorMessage!,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -189,7 +189,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
               'No venues found in Bhaktapur',
               style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSecondaryDark,
               ),
             ),
           );
@@ -230,7 +230,7 @@ class _BhaktapurFutsalScreenState extends State<BhaktapurFutsalScreen> {
           child: Text(
             'No more venues in Bhaktapur',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSecondaryDark,
             ),
           ),
         ),

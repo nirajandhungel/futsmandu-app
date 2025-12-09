@@ -135,7 +135,7 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        venue.address,
+                        venue.address??"No address",
                         style: TextStyle(color: Colors.grey[600]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
