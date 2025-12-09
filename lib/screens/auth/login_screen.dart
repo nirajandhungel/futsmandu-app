@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
                 // Logo
-                Icon(
+                const Icon(
                   Icons.sports_soccer,
                   size: 80,
                   color: AppTheme.primaryColor,
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Login to continue',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                   textAlign: TextAlign.center,
                 ),
