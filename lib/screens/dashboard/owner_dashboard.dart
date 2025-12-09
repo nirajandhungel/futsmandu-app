@@ -6,6 +6,8 @@ import '../../models/dashboard_analytics.dart';
 import '../../utils/theme.dart';
 import '../../widgets/common/loading.dart';
 import '../../utils/helpers.dart';
+import '../owner/my_venues_screen.dart';
+import '../owner/owner_bookings_screen.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -169,55 +171,93 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           '${overview.totalVenues}',
           Icons.stadium,
           Colors.blue,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyVenuesScreen()),
+            );
+          },
         ),
          _buildStatCard(
           'Total Courts',
           '${overview.totalCourts}',
           Icons.sports_soccer,
           Colors.green,
+          onTap: () {
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyVenuesScreen()),
+            );
+          },
         ),
         _buildStatCard(
           'Active Bookings',
           '${overview.confirmedBookings}',
           Icons.calendar_today,
           Colors.orange,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OwnerBookingsScreen(initialTabIndex: 2), // Confirmed tab
+              ),
+            );
+          },
         ),
         _buildStatCard(
           'Pending Requests',
           '${overview.pendingBookings}',
           Icons.pending_actions,
           Colors.redAccent,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OwnerBookingsScreen(initialTabIndex: 1), // Pending tab
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title, 
+    String value, 
+    IconData icon, 
+    Color color, 
+    {VoidCallback? onTap}
+  ) {
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 28),
-            const Spacer(),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const Spacer(),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textSecondary,
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -153,6 +153,11 @@ class Booking extends Equatable {
   bool get isCancelled => status == 'CANCELLED';
   bool get isCompleted => status == 'COMPLETED';
 
+  // Convenience getters for UI
+  String? get courtName => court?.name;
+  String? get venueName => venue?.name;
+  String get date => bookingDate.toIso8601String().split('T')[0];
+
   @override
   List<Object?> get props => [
     id,
