@@ -53,7 +53,7 @@ class FutsmanduApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Futsmandu',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
+            theme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             routerConfig: GoRouter(
               initialLocation: RouteNames.login,
