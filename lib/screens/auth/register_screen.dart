@@ -93,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'Create your account to book courts',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryDark,
                   ),
                   textAlign: TextAlign.center,
                 ),
