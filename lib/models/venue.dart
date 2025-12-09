@@ -19,6 +19,7 @@ class Venue extends Equatable {
   final List<String>? images;
   final List<Court>? courts;
   final DateTime? createdAt;
+  final Map<String, dynamic>? openingHours;
 
   const Venue({
     required this.id,
@@ -38,6 +39,7 @@ class Venue extends Equatable {
     this.images,
     this.courts,
     this.createdAt,
+    this.openingHours,
   });
 
   factory Venue.empty() {
@@ -85,6 +87,7 @@ class Venue extends Equatable {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
+      openingHours: json['openingHours'],
     );
   }
 
@@ -107,6 +110,7 @@ class Venue extends Equatable {
       'images': images,
       'courts': courts?.map((c) => c.toJson()).toList(),
       'createdAt': createdAt?.toIso8601String(),
+      'openingHours': openingHours,
     };
   }
 
@@ -128,6 +132,7 @@ class Venue extends Equatable {
     List<String>? images,
     List<Court>? courts,
     DateTime? createdAt,
+    Map<String, dynamic>? openingHours,
   }) {
     return Venue(
       id: id ?? this.id,
@@ -147,6 +152,7 @@ class Venue extends Equatable {
       images: images ?? this.images,
       courts: courts ?? this.courts,
       createdAt: createdAt ?? this.createdAt,
+      openingHours: openingHours ?? this.openingHours,
     );
   }
 
@@ -169,5 +175,6 @@ class Venue extends Equatable {
     images,
     courts,
     createdAt,
+    openingHours,
   ];
 }

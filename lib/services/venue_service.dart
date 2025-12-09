@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import '../models/venue.dart';
 import '../models/court.dart';
 import '../utils/constants.dart';
@@ -45,6 +47,7 @@ class VenueService {
       'images': json['images'] != null ? List<String>.from(json['images']) : null,
       'courts': json['courts'],
       'createdAt': json['createdAt'],
+      'openingHours': json['openingHours'],
     };
   }
 
@@ -254,6 +257,113 @@ class VenueService {
       }).toList();
     } catch (e) {
       throw Exception('Failed to get owner venues: ${e.toString()}');
+    }
+  }
+
+  // Create Venue
+  Future<Venue> createVenue({
+    required String name,
+    required String description,
+    required String address,
+    required String city,
+    required String phoneNumber,
+    String? email,
+    String? website,
+    double? latitude,
+    double? longitude,
+    required List<String> amenities,
+    required Map<String, dynamic> openingHours,
+    required List<Map<String, dynamic>> courts,
+    required List<File> venueImages,
+    required Map<int, List<File>> courtImages,
+  }) async {
+    try {
+      final formData = FormData();
+
+      // Venue Info
+      formData.fields.add(MapEntry('name', name));
+      formData.fields.add(MapEntry('description', description));
+      formData.fields.add(MapEntry('location[address]', address));
+      formData.fields.add(MapEntry('location[city]', city));
+      // Optional defaults
+      formData.fields.add(const MapEntry('location[state]', 'Bagmati')); 
+      if (latitude != null) formData.fields.add(MapEntry('location[coordinates][latitude]', latitude.toString()));
+      if (longitude != null) formData.fields.add(MapEntry('location[coordinates][longitude]', longitude.toString()));
+      
+      formData.fields.add(MapEntry('contact[phone]', phoneNumber));
+      if (email != null) formData.fields.add(MapEntry('contact[email]', email));
+      if (website != null) formData.fields.add(MapEntry('contact[website]', website));
+
+      // Amenities
+      for (var amenity in amenities) {
+        formData.fields.add(MapEntry('amenities[]', amenity));
+      }
+
+      // Opening Hours
+      openingHours.forEach((day, times) {
+         if (times is Map) {
+           formData.fields.add(MapEntry('openingHours[$day][open]', times['open']));
+           formData.fields.add(MapEntry('openingHours[$day][close]', times['close']));
+         }
+      });
+
+      // Courts
+      for (int i = 0; i < courts.length; i++) {
+        final court = courts[i];
+        formData.fields.add(MapEntry('courts[$i][courtNumber]', (i + 1).toString()));
+        formData.fields.add(MapEntry('courts[$i][name]', court['name']));
+        formData.fields.add(MapEntry('courts[$i][size]', court['size']));
+        formData.fields.add(MapEntry('courts[$i][hourlyRate]', court['hourlyRate'].toString()));
+        
+        if (court['amenities'] != null && court['amenities'] is List) {
+           for (var amenity in court['amenities']) {
+             formData.fields.add(MapEntry('courts[$i][amenities][]', amenity));
+           }
+        }
+      }
+
+      // Images
+      // Venue Images
+      for (var file in venueImages) {
+        formData.files.add(MapEntry(
+          'venueImages',
+          await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
+        ));
+      }
+
+      // Court Images
+      for (var entry in courtImages.entries) {
+        final index = entry.key;
+        final files = entry.value;
+        for (var file in files) {
+          formData.files.add(MapEntry(
+            'courtImages[$index]',
+             await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
+          ));
+        }
+      }
+
+      final response = await _apiService.post<Map<String, dynamic>>(
+        AppConstants.ownerVenuesCreate,
+        data: formData,
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (!response.success || response.data == null) {
+        throw Exception(response.message ?? 'Failed to create venue');
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      final venueData = data['venue'] as Map<String, dynamic>?;
+
+      if (venueData == null) {
+        throw Exception('Venue data not found in response');
+      }
+
+      final transformed = _transformVenueJson(venueData);
+      return Venue.fromJson(transformed);
+    } catch (e) {
+      throw Exception('Failed to create venue: ${e.toString()}');
     }
   }
 

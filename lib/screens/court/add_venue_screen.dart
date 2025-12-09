@@ -31,7 +31,7 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
   String _courtSize = '5v5';
   
   // Image Data
-  File? _selectedImage;
+  List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
   String _selectedCity = 'Kathmandu';
@@ -62,17 +62,23 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImages.addAll(images.map((img) => File(img.path)));
         });
       }
     } catch (e) {
-      Helpers.showSnackbar(context, 'Failed to pick image', isError: true);
+      Helpers.showSnackbar(context, 'Failed to pick images', isError: true);
     }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
   }
 
   void _toggleAmenity(String amenity) {
@@ -93,8 +99,8 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
       return;
     }
     
-    if (_selectedImage == null) {
-      Helpers.showSnackbar(context, 'Please select a venue image', isError: true);
+    if (_selectedImages.isEmpty) {
+      Helpers.showSnackbar(context, 'Please select at least one venue image', isError: true);
       return;
     }
 
@@ -106,7 +112,7 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
       email: _emailController.text.trim(),
       description: _descriptionController.text.trim(),
       amenities: _selectedAmenities,
-      imageFile: _selectedImage!,
+      imageFiles: _selectedImages,
       courtName: _courtNameController.text.trim(),
       courtPrice: double.parse(_courtPriceController.text.trim()),
       courtSize: _courtSize,
@@ -140,7 +146,7 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
                   children: [
                    // Image Picker
                     GestureDetector(
-                      onTap: _pickImage,
+                      onTap: _pickImages,
                       child: Container(
                         height: 200,
                         width: double.infinity,
@@ -148,25 +154,76 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey[300]!),
-                          image: _selectedImage != null
-                              ? DecorationImage(
-                                  image: FileImage(_selectedImage!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
                         ),
-                        child: _selectedImage == null
+                        child: _selectedImages.isEmpty
                             ? const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                                  Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
                                   SizedBox(height: 8),
-                                  Text('Tap to add venue image', style: TextStyle(color: Colors.grey)),
+                                  Text('Tap to add venue images', style: TextStyle(color: Colors.grey)),
                                 ],
                               )
-                            : null,
+                            : ListView.separated(
+                                padding: const EdgeInsets.all(8),
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _selectedImages.length + 1,
+                                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                itemBuilder: (context, index) {
+                                  if (index == _selectedImages.length) {
+                                    return GestureDetector(
+                                      onTap: _pickImages,
+                                      child: Container(
+                                        width: 150,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.grey[300]!),
+                                        ),
+                                        child: const Icon(Icons.add_a_photo, color: Colors.grey),
+                                      ),
+                                    );
+                                  }
+                                  
+                                  return Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          _selectedImages[index],
+                                          width: 200,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 4,
+                                        right: 4,
+                                        child: GestureDetector(
+                                          onTap: () => _removeImage(index),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.black54,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    if (_selectedImages.isNotEmpty)
+                      const Text(
+                        'Tap + to add more images',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
                     const SizedBox(height: 24),
 
                     AppTextField(

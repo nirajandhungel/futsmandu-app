@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/owner_service.dart';
+import '../../models/dashboard_analytics.dart';
 import '../../utils/theme.dart';
-import '../../utils/helpers.dart';
 import '../../widgets/common/loading.dart';
+import '../../utils/helpers.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -15,7 +16,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   final OwnerService _ownerService = OwnerService();
-  Map<String, dynamic>? _dashboardData;
+  DashboardAnalytics? _dashboardData;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -26,6 +27,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Future<void> _loadDashboard() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -33,17 +35,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     try {
       final data = await _ownerService.getDashboardAnalytics();
-      print("Owner dashboard data by nirajan on owner_dashboard.dart${data}");
+      if (!mounted) return;
       setState(() {
         _dashboardData = data;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
       });
-      print("Error on owner_dashboard get dashboard api ${e}");
     }
   }
 
@@ -101,17 +103,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return RefreshIndicator(
       onRefresh: _loadDashboard,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppTheme.paddingM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildWelcomeCard(),
             const SizedBox(height: 16),
-            _buildStatsGrid(),
+            _buildOverviewCards(),
             const SizedBox(height: 24),
-            _buildRecentBookings(),
+            _buildRevenueSection(),
             const SizedBox(height: 24),
-            _buildQuickActions(),
+            _buildBookingsSection(),
+            const SizedBox(height: 24),
+            _buildInsightsSection(),
           ],
         ),
       ),
@@ -136,7 +141,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Manage your futsal courts and bookings',
+                  'Here is your venue performance summary.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -149,40 +154,39 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _buildStatsGrid() {
-    final stats = _dashboardData!;
-    
+  Widget _buildOverviewCards() {
+    final overview = _dashboardData!.overview;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.2,
+      childAspectRatio: 1.3,
       children: [
         _buildStatCard(
-          'Total Courts',
-          '${stats['totalCourts'] ?? 0}',
-          Icons.sports_soccer,
+          'Total Venues',
+          '${overview.totalVenues}',
+          Icons.stadium,
           Colors.blue,
         ),
-        _buildStatCard(
-          'Total Bookings',
-          '${stats['totalBookings'] ?? 0}',
-          Icons.calendar_today,
+         _buildStatCard(
+          'Total Courts',
+          '${overview.totalCourts}',
+          Icons.sports_soccer,
           Colors.green,
         ),
         _buildStatCard(
-          'Pending Bookings',
-          '${stats['pendingBookings'] ?? 0}',
-          Icons.pending,
+          'Active Bookings',
+          '${overview.confirmedBookings}',
+          Icons.calendar_today,
           Colors.orange,
         ),
         _buildStatCard(
-          'Revenue',
-          'Rs. ${stats['totalRevenue'] ?? 0}',
-          Icons.attach_money,
-          Colors.purple,
+          'Pending Requests',
+          '${overview.pendingBookings}',
+          Icons.pending_actions,
+          Colors.redAccent,
         ),
       ],
     );
@@ -191,17 +195,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 2,
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(12),
-        constraints: BoxConstraints(
-        minHeight: 100,  // Fixed height
-      ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
+            Icon(icon, color: color, size: 28),
+            const Spacer(),
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -214,7 +215,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               title,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppTheme.textSecondary,
-                fontSize: 12,  
               ),
             ),
           ],
@@ -223,62 +223,71 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _buildRecentBookings() {
-    final bookings = _dashboardData!['recentBookings'] as List<dynamic>? ?? [];
-    
+  Widget _buildRevenueSection() {
+    final revenue = _dashboardData!.revenue;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recent Bookings',
+          'Revenue',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 12),
-        if (bookings.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                child: Text('No recent bookings'),
-              ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildRevenueRow('Total Revenue', revenue.total, isTotal: true),
+                const Divider(),
+                _buildRevenueRow('Completed Bookings', revenue.completed),
+                const Divider(),
+                _buildRevenueRow('Last 7 Days', revenue.last7Days),
+                const Divider(),
+                _buildRevenueRow('Last 30 Days', revenue.last30Days),
+              ],
             ),
-          )
-        else
-          ...bookings.take(5).map((booking) {
-            final bookingData = booking as Map<String, dynamic>;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: _getStatusColor(bookingData['status'] as String? ?? 'PENDING'),
-                  child: Icon(
-                    _getStatusIcon(bookingData['status'] as String? ?? 'PENDING'),
-                    color: Colors.white,
-                  ),
-                ),
-                title: Text(bookingData['courtName'] as String? ?? 'Unknown Court'),
-                subtitle: Text(
-                  '${bookingData['bookingDate'] ?? ''} • ${bookingData['startTime'] ?? ''} - ${bookingData['endTime'] ?? ''}',
-                ),
-                trailing: Text(
-                  'Rs. ${bookingData['totalAmount'] ?? 0}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-          }),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildRevenueRow(String label, double amount, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            'Rs. ${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              color: isTotal ? AppTheme.primaryColor : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingsSection() {
+    final bookings = _dashboardData!.bookings;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          'Booking Statistics',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -287,54 +296,163 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Helpers.showSnackbar(context, 'Add court feature coming soon!');
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Court'),
+              child: _buildInfoCard(
+                'Last 7 Days',
+                '${bookings.last7Days}',
+                Icons.date_range,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Helpers.showSnackbar(context, 'View bookings feature coming soon!');
-                },
-                icon: const Icon(Icons.list),
-                label: const Text('View Bookings'),
+              child: _buildInfoCard(
+                'Last 30 Days',
+                '${bookings.last30Days}',
+                Icons.calendar_month,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('By Status', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                ...bookings.byStatus.entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildStatusChip(entry.key),
+                      Text(
+                        '${entry.value}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'CONFIRMED':
-        return Colors.green;
-      case 'PENDING':
-        return Colors.orange;
-      case 'CANCELLED':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+  Widget _buildInfoCard(String title, String value, IconData icon) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(icon, color: AppTheme.primaryColor),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  IconData _getStatusIcon(String status) {
+  Widget _buildStatusChip(String status) {
+    Color color;
     switch (status.toUpperCase()) {
-      case 'CONFIRMED':
-        return Icons.check_circle;
-      case 'PENDING':
-        return Icons.pending;
-      case 'CANCELLED':
-        return Icons.cancel;
-      default:
-        return Icons.help;
+      case 'CONFIRMED': color = Colors.green; break;
+      case 'PENDING': color = Colors.orange; break;
+      case 'CANCELLED': color = Colors.red; break;
+      case 'COMPLETED': color = Colors.blue; break;
+      default: color = Colors.grey;
     }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInsightsSection() {
+    final insights = _dashboardData!.insights;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Insights',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Peak Hours', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: insights.peakHours.map((hour) => Chip(
+                    label: Text(hour),
+                    backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                    labelStyle: TextStyle(color: AppTheme.primaryColor),
+                  )).toList(),
+                ),
+                const Divider(height: 24),
+                const Text('Average Booking Value', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  'Rs. ${insights.averageBookingValue.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 18, color: Colors.green),
+                ),
+                if (insights.bookingsPerCourt.isNotEmpty) ...[
+                  const Divider(height: 24),
+                  const Text('Top Courts', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...insights.bookingsPerCourt.take(3).map((court) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(court.courtName),
+                    subtitle: Text('${court.totalBookings} bookings'),
+                    trailing: Text(
+                      'Rs. ${court.revenue.toStringAsFixed(0)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  )),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

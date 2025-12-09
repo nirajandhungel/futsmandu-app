@@ -149,8 +149,8 @@ class VenueProvider with ChangeNotifier {
     }
   }
 
-  // Create Venue
   Future<bool> createVenue({
+
     required String name,
     required String address,
     required String city,
@@ -158,28 +158,55 @@ class VenueProvider with ChangeNotifier {
     required String email,
     required String description,
     required List<String> amenities,
-    required File imageFile,
+    required List<File> imageFiles,
     required String courtName,
     required double courtPrice,
-    required String courtSize,
+    required String courtSize, // e.g. '5v5'
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _ownerService.createVenue(
+      // 1. Construct Opening Hours (Default: 6AM - 10PM, All week)
+      final defaultHours = {
+        'open': '06:00',
+        'close': '22:00', 
+      };
+      
+      final openingHours = {
+        'monday': defaultHours,
+        'tuesday': defaultHours,
+        'wednesday': defaultHours,
+        'thursday': defaultHours,
+        'friday': defaultHours,
+        'saturday': defaultHours,
+        'sunday': defaultHours,
+      };
+
+      // 2. Construct Court Object
+      final court = {
+        'name': courtName,
+        'size': courtSize,
+        'hourlyRate': courtPrice,
+        'courtNumber': '1', 
+        'maxPlayers': courtSize == '5v5' ? 10 : (courtSize == '7v7' ? 14 : 12),
+        'amenities': [],
+      };
+
+      // 3. Call Service
+      await _venueService.createVenue(
         name: name,
+        description: description,
         address: address,
         city: city,
         phoneNumber: phoneNumber,
         email: email,
-        description: description,
         amenities: amenities,
-        imageFile: imageFile,
-        courtName: courtName,
-        courtPrice: courtPrice,
-        courtSize: courtSize,
+        openingHours: openingHours,
+        courts: [court],
+        venueImages: imageFiles, // Pass list
+        courtImages: {}, 
       );
       
       // Refresh list

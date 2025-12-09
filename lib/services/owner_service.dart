@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/venue.dart';
 import '../models/user.dart';
+import '../models/dashboard_analytics.dart';
 import '../utils/constants.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -287,7 +288,7 @@ class OwnerService {
   }
 
   // Get Owner Dashboard Analytics
-  Future<Map<String, dynamic>> getDashboardAnalytics() async {
+  Future<DashboardAnalytics> getDashboardAnalytics() async {
     try {
       final response = await _apiService.get<Map<String, dynamic>>(
         AppConstants.ownerDashboard,
@@ -297,8 +298,8 @@ class OwnerService {
       if (!response.success || response.data == null) {
         throw Exception(response.message ?? 'Failed to get dashboard analytics');
       }
-
-      return response.data as Map<String, dynamic>;
+      
+      return DashboardAnalytics.fromJson(response.data!);
     } catch (e) {
       throw Exception('Failed to get dashboard analytics: ${e.toString()}');
     }

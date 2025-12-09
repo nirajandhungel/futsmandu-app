@@ -306,7 +306,7 @@ class AppDrawer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 60,
                   child: ElevatedButton.icon(
                     onPressed: () => _handleLogout(context),
                     icon: const Icon(Icons.logout),
@@ -335,7 +335,7 @@ class AppDrawer extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 60,
                     child: ElevatedButton.icon(
                       onPressed: ()   {
                         Navigator.pop(context); // Close drawer
@@ -360,7 +360,7 @@ class AppDrawer extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 60,
                     child: ElevatedButton.icon(
                       onPressed: () => _handleDeactivateOwnerMode(context),
                       icon: const Icon(Icons.person),

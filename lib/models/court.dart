@@ -11,6 +11,8 @@ class Court extends Equatable {
   final String? futsalCourtId;
   final String? description;
   final DateTime? createdAt;
+  final List<String>? amenities;
+  final List<String>? images;
 
   const Court({
     required this.id,
@@ -23,6 +25,8 @@ class Court extends Equatable {
     this.futsalCourtId,
     this.description,
     this.createdAt,
+    this.amenities,
+    this.images,
   });
 
   factory Court.empty() {
@@ -51,6 +55,10 @@ class Court extends Equatable {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
+      amenities: json['amenities'] != null
+          ? List<String>.from(json['amenities'])
+          : null,
+      images: json['images'] != null ? List<String>.from(json['images']) : null,
     );
   }
 
@@ -66,6 +74,8 @@ class Court extends Equatable {
       'futsalCourtId': futsalCourtId,
       'description': description,
       'createdAt': createdAt?.toIso8601String(),
+      'amenities': amenities,
+      'images': images,
     };
   }
 
@@ -80,6 +90,8 @@ class Court extends Equatable {
     String? futsalCourtId,
     String? description,
     DateTime? createdAt,
+    List<String>? amenities,
+    List<String>? images,
   }) {
     return Court(
       id: id ?? this.id,
@@ -92,6 +104,8 @@ class Court extends Equatable {
       futsalCourtId: futsalCourtId ?? this.futsalCourtId,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
+      amenities: amenities ?? this.amenities,
+      images: images ?? this.images,
     );
   }
 
@@ -107,6 +121,8 @@ class Court extends Equatable {
     futsalCourtId,
     description,
     createdAt,
+    amenities,
+    images,
   ];
 }
 
