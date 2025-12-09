@@ -339,7 +339,7 @@ class AppDrawer extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: ()   {
                         Navigator.pop(context); // Close drawer
-                        context.push(RouteNames.OwnerKycScreen); // Go directly to KYC screen
+                        context.push(RouteNames.ownerKycScreen); // Go directly to KYC screen
                       },
                       icon: const Icon(Icons.business_center),
                       label: const Text('Owner Mode'),

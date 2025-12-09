@@ -33,6 +33,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     try {
       final data = await _ownerService.getDashboardAnalytics();
+      print("Owner dashboard data by nirajan on owner_dashboard.dart${data}");
       setState(() {
         _dashboardData = data;
         _isLoading = false;
@@ -42,6 +43,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
       });
+      print("Error on owner_dashboard get dashboard api ${e}");
     }
   }
 
@@ -154,9 +156,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.2,
       children: [
         _buildStatCard(
           'Total Courts',
@@ -189,13 +191,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        constraints: BoxConstraints(
+        minHeight: 100,  // Fixed height
+      ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 32),
+            Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
             Text(
               value,
@@ -209,6 +214,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               title,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppTheme.textSecondary,
+                fontSize: 12,  
               ),
             ),
           ],

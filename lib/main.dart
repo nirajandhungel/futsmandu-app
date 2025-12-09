@@ -118,7 +118,7 @@ class FutsmanduApp extends StatelessWidget {
                   builder: (context, state) => const OwnerDashboardScreen(),
                 ),
                 GoRoute(
-                  path: RouteNames.OwnerKycScreen,
+                  path: RouteNames.ownerKycScreen,
                   builder: (context, state) => const OwnerKycScreen(),
                 ),
                 GoRoute(
