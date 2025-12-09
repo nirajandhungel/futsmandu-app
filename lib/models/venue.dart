@@ -4,8 +4,8 @@ import 'court.dart';
 class Venue extends Equatable {
   final String id;
   final String name;
-  final String address;
-  final String city;
+  final String ?address;
+  final String ?city;
   final String? description;
   final String? phoneNumber;
   final String? email;
@@ -46,8 +46,8 @@ class Venue extends Equatable {
     return const Venue(
       id: '',
       name: '',
-      address: '',
-      city: '',
+      address: null,
+      city: null,
       isActive: false,
       ownerId: '',
     );
@@ -66,8 +66,8 @@ class Venue extends Equatable {
     return Venue(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'] ?? '',
+      address: json['address'],
+      city: json['city'],
       description: json['description'],
       phoneNumber: json['phoneNumber'],
       email: json['email'],
