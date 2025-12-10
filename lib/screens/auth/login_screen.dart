@@ -30,30 +30,45 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+  final authProvider = context.read<AuthProvider>();
+  final success = await authProvider.login(
+    email: _emailController.text.trim(),
+    password: _passwordController.text,
+  );
 
-    setState(() => _isLoading = false);
+  setState(() => _isLoading = false);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    if (success) {
+  if (success) {
+    final user = authProvider.user;
+    
+    // Simple logic: If user is approved owner and in owner mode, go to owner dashboard
+    if (user?.role == 'OWNER' && 
+        user?.ownerStatus == 'APPROVED' && 
+        user?.mode == 'OWNER') {
+      context.go(RouteNames.ownerDashboard);
+    } 
+    // If admin, go to admin dashboard
+    else if (user?.role == 'ADMIN') {
+      context.go(RouteNames.adminDashboard);
+    } 
+    // Everyone else goes to home
+    else {
       context.go(RouteNames.home);
-    } else {
-      Helpers.showSnackbar(
-        context,
-        authProvider.errorMessage ?? 'Login failed',
-        isError: true,
-      );
     }
+  } else {
+    Helpers.showSnackbar(
+      context,
+      authProvider.errorMessage ?? 'Login failed',
+      isError: true,
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {

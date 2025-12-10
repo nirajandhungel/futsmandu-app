@@ -7,7 +7,7 @@ import '../../providers/venue_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
-import '../../widgets/common/loading.dart';
+// import '../../widgets/common/loading.dart';
 import '../../widgets/court/venue_card.dart';
 import '../menu/app_drawer.dart';
 
@@ -152,6 +152,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+      // Add this check at the beginning
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.user;
+    
+    if (user?.role=="OWNER"  && user?.mode =="OWNER" && user?.ownerStatus=="APPROVED") {
+      // Redirect to owner dashboard
+      context.go(RouteNames.ownerDashboard);
+    } else if (user?.role=="ADMIN") {
+      // Redirect to admin dashboard
+      context.go(RouteNames.adminDashboard);
+    }
+  });
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 34, 35, 34), 
       appBar: AppBar(
@@ -281,23 +294,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
           ],
         ),
-      ),
-      floatingActionButton: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
-          if (authProvider.user?.isInOwnerMode ?? false) {
-            return FloatingActionButton.extended(
-              onPressed: () {
-                context.push(RouteNames.addVenue);
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Court'),
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: AppTheme.buttonPrimaryText,
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+      )
+
     );
   }
 
@@ -589,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       // Navigate to all venues or featured list
                     },
-                    child: Text(
+                    child: const Text(
                       'See All',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
@@ -624,134 +622,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-  // Widget _buildVenuesGrid() {
-  //   return Consumer<VenueProvider>(
-  //     builder: (context, provider, _) {
-  //       if (provider.isSearching && _currentPage == 1) {
-  //         return const SliverFillRemaining(
-  //           child: LoadingWidget(message: 'Loading venues...'),
-  //         );
-  //       }
-
-  //       if (provider.errorMessage != null && _currentPage == 1) {
-  //         return SliverFillRemaining(
-  //           child: Center(
-  //             child: Column(
-  //               mainAxisAlignment: MainAxisAlignment.center,
-  //               children: [
-  //                 const Icon(
-  //                   Icons.error,
-  //                   size: 64,
-  //                   color: AppTheme.errorColor,
-  //                 ),
-  //                 const SizedBox(height: 16),
-  //                 Text(
-  //                   provider.errorMessage!,
-  //                   textAlign: TextAlign.center,
-  //                   style: const TextStyle(
-  //                     fontSize: 16,
-  //                     color: AppTheme.textSecondaryDark,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 16),
-  //                 ElevatedButton(
-  //                   onPressed: () {
-  //                     provider.clearError();
-  //                     _loadVenues();
-  //                   },
-  //                   child: const Text('Retry'),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         );
-  //       }
-
-  //       if (provider.venues.isEmpty && _currentPage == 1) {
-  //         return SliverFillRemaining(
-  //           child: Center(
-  //             child: Column(
-  //               mainAxisAlignment: MainAxisAlignment.center,
-  //               children: [
-  //                 const Icon(
-  //                   Icons.search,
-  //                   size: 64,
-  //                   color: AppTheme.textSecondaryDark,
-  //                 ),
-  //                 const SizedBox(height: 16),
-  //                 const Text(
-  //                   'No venues found',
-  //                   style: TextStyle(
-  //                     fontSize: 18,
-  //                     fontWeight: FontWeight.w600,
-  //                     color: AppTheme.textPrimaryDark,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 8),
-  //                 Text(
-  //                   _searchCity.isNotEmpty || _searchController.text.isNotEmpty
-  //                       ? 'Try adjusting your search filters'
-  //                       : 'Be the first to add a venue!',
-  //                   textAlign: TextAlign.center,
-  //                   style: const TextStyle(
-  //                     fontSize: 14,
-  //                     color: AppTheme.textTertiaryDark,
-  //                   ),
-  //                 ),
-  //                 if (_searchCity.isNotEmpty || _searchController.text.isNotEmpty) ...[
-  //                   const SizedBox(height: 16),
-  //                   ElevatedButton(
-  //                     onPressed: () {
-  //                       setState(() {
-  //                         _searchCity = '';
-  //                         _searchController.clear();
-  //                       });
-  //                       _loadVenues();
-  //                     },
-  //                     child: const Text('Clear Filters'),
-  //                   ),
-  //                 ],
-  //               ],
-  //             ),
-  //           ),
-  //         );
-  //       }
-
-  //       return SliverPadding(
-  //         padding: const EdgeInsets.all(16),
-  //         sliver: SliverGrid(
-  //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //             crossAxisCount: 2,
-  //             crossAxisSpacing: 12,
-  //             mainAxisSpacing: 12,
-  //             childAspectRatio: 0.85,
-  //           ),
-  //           delegate: SliverChildBuilderDelegate(
-  //             (context, index) {
-  //               if (index >= provider.venues.length) {
-  //                 return const SizedBox.shrink();
-  //               }
-                
-  //               final venue = provider.venues[index];
-  //               return VenueCard(
-  //                 venue: venue,
-  //                 onTap: () {
-  //                   context.push(RouteNames.venueDetail, extra: venue);
-  //                 },
-  //               );
-  //             },
-  //             childCount: provider.venues.length,
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
-
-
-
 }
 
 class DashboardAction {

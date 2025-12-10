@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:futsmandu_flutter/screens/owner/owner_bookings_screen.dart';
 import 'package:futsmandu_flutter/screens/profile/edit_profile.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,7 @@ import 'screens/home/lalitpur_futsal.dart';
 import 'screens/dashboard/owner_dashboard.dart';
 import 'screens/dashboard/admin_dashboard.dart';
 import 'screens/owner/owner_registration_screen.dart';
+import 'screens/owner/my_venues_screen.dart';
 import 'widgets/court/venuedetail_screen.dart';
 import 'widgets/court/bookscreen_ui.dart';
 import 'models/venue.dart';
@@ -81,6 +83,7 @@ class FutsmanduApp extends StatelessWidget {
                 return null;
               },
               routes: [
+                // auth
                 GoRoute(
                   path: RouteNames.login,
                   builder: (context, state) => const LoginScreen(),
@@ -89,6 +92,8 @@ class FutsmanduApp extends StatelessWidget {
                   path: RouteNames.register,
                   builder: (context, state) => const RegisterScreen(),
                 ),
+
+                //player
                 GoRoute(
                   path: RouteNames.home,
                   builder: (context, state) => const HomeScreen(),
@@ -113,6 +118,8 @@ class FutsmanduApp extends StatelessWidget {
                   path: '/lalitpur-futsal',
                   builder: (context, state) => const LalitpurFutsalScreen(),
                 ),
+
+                //owner
                 GoRoute(
                   path: RouteNames.ownerDashboard,
                   builder: (context, state) => const OwnerDashboardScreen(),
@@ -121,6 +128,17 @@ class FutsmanduApp extends StatelessWidget {
                   path: RouteNames.ownerKycScreen,
                   builder: (context, state) => const OwnerKycScreen(),
                 ),
+                GoRoute(
+                  path: RouteNames.myVenues,
+                  builder: (context, state) => const MyVenuesScreen(),
+                ),
+                GoRoute(
+                  path: RouteNames.ownerVenueBookings,
+                  builder: (context, state) => const OwnerBookingsScreen(),
+                ),
+
+
+                //admin
                 GoRoute(
                   path: RouteNames.adminDashboard,
                   builder: (context, state) => const AdminDashboard(),

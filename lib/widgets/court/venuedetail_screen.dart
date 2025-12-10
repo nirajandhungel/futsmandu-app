@@ -328,7 +328,7 @@ class VenueDetailScreen extends StatelessWidget {
       bottomSheet: Container(
         padding: const EdgeInsets.all(AppTheme.paddingL),
         decoration: BoxDecoration(
-          color: Colors.white,
+          // color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),

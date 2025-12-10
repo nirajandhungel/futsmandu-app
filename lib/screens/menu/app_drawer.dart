@@ -6,7 +6,6 @@ import '../../services/owner_service.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
-import '../../screens/bookings/my_bookings_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -34,7 +33,12 @@ class AppDrawer extends StatelessWidget {
     Helpers.showSnackbar(context, 'Logged out successfully');
   }
 
- 
+  Future<void> _handleActivateOwnerMode(BuildContext context) async {
+    Navigator.pop(context); // Close drawer
+    
+    // Navigate to KYC screen which handles the status check
+    context.push(RouteNames.ownerKycScreen);
+  }
 
   Future<void> _handleDeactivateOwnerMode(BuildContext context) async {
     final confirmed = await Helpers.showConfirmDialog(
@@ -53,21 +57,16 @@ class AppDrawer extends StatelessWidget {
       final authProvider = context.read<AuthProvider>();
       final ownerService = OwnerService();
 
-      // Call deactivate owner mode API
       final authResponse = await ownerService.activatePlayerMode();
 
       if (!context.mounted) return;
-
       Navigator.pop(context); // Close loading dialog
       Navigator.pop(context); // Close drawer
 
-      // Update user in auth provider - this will trigger UI rebuild
       await authProvider.updateUser(authResponse.user);
 
-      // Navigate to home to refresh UI and ensure we're in player mode context
       if (context.mounted) {
         context.go(RouteNames.home);
-        // Show success message after a short delay to ensure navigation is complete
         await Future.delayed(const Duration(milliseconds: 500));
         if (context.mounted) {
           Helpers.showSnackbar(context, 'Switched to Player Mode successfully');
@@ -76,13 +75,11 @@ class AppDrawer extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
 
-      // Close loading dialog if still open
       if (Navigator.canPop(context)) {
-        Navigator.pop(context); // Close loading dialog
+        Navigator.pop(context);
       }
-      // Close drawer if still open
       if (Navigator.canPop(context)) {
-        Navigator.pop(context); // Close drawer
+        Navigator.pop(context);
       }
 
       Helpers.showSnackbar(
@@ -96,16 +93,25 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: AppTheme.backgroundDark,
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           final user = authProvider.user;
+          final isOwnerMode = user?.isInOwnerMode ?? false;
 
           return ListView(
             padding: EdgeInsets.zero,
             children: [
               UserAccountsDrawerHeader(
                 decoration: const BoxDecoration(
-                  color: AppTheme.darkPrimaryColor,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.darkPrimaryColor,
+                    ],
+                  ),
                 ),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white,
@@ -127,110 +133,171 @@ class AppDrawer extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                accountEmail: Text(user?.email ?? ''),
+                accountEmail: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user?.email ?? ''),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isOwnerMode ? '👔 Owner Mode' : '⚽ Player Mode',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              // Home
+              // OWNER MODE NAVIGATION
+              if (isOwnerMode) ...[
+                ListTile(
+                  leading: const Icon(Icons.dashboard, color: AppTheme.primaryColor),
+                  title: const Text('Owner Dashboard', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(RouteNames.ownerDashboard);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.stadium, color: AppTheme.textPrimaryDark),
+                  title: const Text('My Venues', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(RouteNames.myVenues);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.calendar_today, color: AppTheme.textPrimaryDark),
+                  title: const Text('Manage Bookings', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to owner bookings screen
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.analytics, color: AppTheme.textPrimaryDark),
+                  title: const Text('Analytics', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Helpers.showSnackbar(context, 'Analytics coming soon!');
+                  },
+                ),
+              ]
+              // PLAYER MODE NAVIGATION
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.home, color: AppTheme.textPrimaryDark),
+                  title: const Text('Home', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(RouteNames.home);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.sports_soccer, color: AppTheme.textPrimaryDark),
+                  title: const Text('Browse Courts', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(RouteNames.home);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.book_online, color: AppTheme.textPrimaryDark),
+                  title: const Text('My Bookings', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(RouteNames.mybookings);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.group, color: AppTheme.textPrimaryDark),
+                  title: const Text('Join Teammates', style: TextStyle(color: AppTheme.textPrimaryDark)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(RouteNames.joinTeammates);
+                  },
+                ),
+              ],
+
+              const Divider(color: AppTheme.dividerColorDark),
+
+              // COMMON NAVIGATION
               ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Home'),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-
-              // Book a Venue
-              ListTile(
-                leading: const Icon(Icons.sports_soccer),
-                title: const Text('Book a Venue'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Helpers.showSnackbar(context, 'Browse courts to book!');
-                },
-              ),
-
-              // My Bookings
-              ListTile(
-                leading: const Icon(Icons.book_online),
-                title: const Text('My Bookings'),
-                onTap: () {
-                  Navigator.pop(context);         // Close the drawer
-                  context.go(RouteNames.mybookings); // Navigate to MyBookings screen
-                },
-              ),
-
-
-
-              // Join Teammates
-              ListTile(
-                leading: const Icon(Icons.group),
-                title: const Text('Join Teammates'),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.go(RouteNames.joinTeammates);
-                },
-              ),
-
-              const Divider(),
-
-              // Profile
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('Profile'),
+                leading: const Icon(Icons.person, color: AppTheme.textPrimaryDark),
+                title: const Text('Profile', style: TextStyle(color: AppTheme.textPrimaryDark)),
                 onTap: () {
                   Navigator.pop(context);
                   context.push(RouteNames.profile);
                 },
               ),
-
-              // Settings
               ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Settings'),
+                leading: const Icon(Icons.settings, color: AppTheme.textPrimaryDark),
+                title: const Text('Settings', style: TextStyle(color: AppTheme.textPrimaryDark)),
                 onTap: () {
                   Navigator.pop(context);
                   Helpers.showSnackbar(context, 'Settings coming soon!');
                 },
               ),
-
-              // Help & Support
               ListTile(
-                leading: const Icon(Icons.help),
-                title: const Text('Help & Support'),
+                leading: const Icon(Icons.help, color: AppTheme.textPrimaryDark),
+                title: const Text('Help & Support', style: TextStyle(color: AppTheme.textPrimaryDark)),
                 onTap: () {
                   Navigator.pop(context);
                   Helpers.showSnackbar(context, 'Support coming soon!');
                 },
               ),
 
-              const Divider(),
-
-              // Owner Dashboard (show when in owner mode)
-              if (user?.isInOwnerMode ?? false)
-                ListTile(
-                  leading: const Icon(Icons.dashboard),
-                  title: const Text('Owner Dashboard'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push(RouteNames.ownerDashboard);
-                  },
-                ),
-
               // Admin Dashboard
-              if (user?.isAdmin ?? false)
+              if (user?.isAdmin ?? false) ...[
+                const Divider(color: AppTheme.dividerColorDark),
                 ListTile(
-                  leading: const Icon(Icons.admin_panel_settings),
-                  title: const Text('Admin Dashboard'),
+                  leading: const Icon(Icons.admin_panel_settings, color: Colors.red),
+                  title: const Text('Admin Dashboard', style: TextStyle(color: Colors.red)),
                   onTap: () {
                     Navigator.pop(context);
                     context.push(RouteNames.adminDashboard);
                   },
                 ),
+              ],
 
-              const Divider(),
+              const Divider(color: AppTheme.dividerColorDark),
               const SizedBox(height: 8),
 
-              // Logout button
+              // MODE TOGGLE BUTTON
+              if (user != null && !user.isAdmin) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton.icon(
+                      onPressed: isOwnerMode
+                          ? () => _handleDeactivateOwnerMode(context)
+                          : () => _handleActivateOwnerMode(context),
+                      icon: Icon(isOwnerMode ? Icons.person : Icons.business_center),
+                      label: Text(isOwnerMode ? 'Switch to Player Mode' : 'Switch to Owner Mode'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isOwnerMode ? Colors.green : Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // LOGOUT BUTTON
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
@@ -250,60 +317,6 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Mode Toggle Buttons
-              // Show "Owner Mode" button only when:
-              // - User is not admin
-              // - User is currently in player mode (regardless of role)
-              if (user != null &&
-                  !user.isAdmin &&
-                  user.isInPlayerMode)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton.icon(
-                      onPressed: ()   {
-                        Navigator.pop(context); // Close drawer
-                        context.push(RouteNames.ownerKycScreen); // Go directly to KYC screen
-                      },
-                      icon: const Icon(Icons.business_center),
-                      label: const Text('Owner Mode'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Show "Player Mode" button when user is in owner mode
-              if (user != null && user.isInOwnerMode)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleDeactivateOwnerMode(context),
-                      icon: const Icon(Icons.person),
-                      label: const Text('Player Mode'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
 
               const SizedBox(height: 16),
             ],

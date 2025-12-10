@@ -306,7 +306,7 @@ class BookingService {
       }
 
       final response = await _apiService.get<Map<String, dynamic>>(
-        '/owner/bookings',
+        '/owner/myVenueBookings',
         queryParameters: queryParams,
         fromJson: (json) => json as Map<String, dynamic>,
       );
@@ -315,11 +315,30 @@ class BookingService {
         return [];
       }
 
-      // Server returns: { bookings: [...], count: ... }
+      // DEBUG: Print the response structure
+      print('DEBUG - Response data keys: ${response.data!.keys}');
+      print('DEBUG - Data structure: ${response.data}');
+
       final data = response.data as Map<String, dynamic>;
-      final bookingsList = data['bookings'] as List<dynamic>?;
-      
-      if (bookingsList == null) {
+
+      // Check for different possible keys
+      List<dynamic>? bookingsList;
+
+      if (data.containsKey('booking')) {
+        bookingsList = data['booking'] as List<dynamic>?;
+      } else if (data.containsKey('bookings')) {
+        bookingsList = data['bookings'] as List<dynamic>?;
+      } else if (data.isNotEmpty) {
+        // Try to find any list in the data
+        for (var key in data.keys) {
+          if (data[key] is List<dynamic>) {
+            bookingsList = data[key] as List<dynamic>?;
+            break;
+          }
+        }
+      }
+
+      if (bookingsList == null || bookingsList.isEmpty) {
         return [];
       }
 
@@ -330,7 +349,6 @@ class BookingService {
       throw Exception('Failed to get owner bookings: ${e.toString()}');
     }
   }
-
   // Confirm Booking (alias for approve)
   Future<Booking> confirmBooking(String bookingId) async {
     return approveBooking(bookingId);

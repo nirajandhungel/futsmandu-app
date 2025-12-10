@@ -25,7 +25,7 @@ class AppConstants {
   static const String courtsSearch = '/courts/public/courts/search';
   static const String courtsDetail = '/courts/public/courts';
   static const String courtAvailability = '/courts/public/courts/id/availability'; // /:id/availability
-  static const String ownerVenues = '/courts/owner/my-venues';
+  static const String ownerVenues = '/owner/myVenues';
 
   // Booking endpoints
   static const String bookings = '/bookings';
@@ -112,5 +112,7 @@ class RouteNames {
   static const String addCourt = '/add-court';
   static const String venueDetail = '/venue-detail';
   static const String addVenue = '/add-venue';
+  static const String myVenues = '/myVenues';
+  static const String ownerVenueBookings = '/myVenueBookings';
 
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/admin_service.dart';
+import '../../utils/theme.dart';
 
 class AdminOwnerRequestsScreen extends StatefulWidget {
   const AdminOwnerRequestsScreen({Key? key}) : super(key: key);
@@ -44,18 +45,39 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: AppTheme.backgroundDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppBar(
-              title: Text(title),
-              automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.cardColorDark,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppTheme.radiusL),
+                  topRight: Radius.circular(AppTheme.radiusL),
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimaryDark,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppTheme.textPrimaryDark),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: InteractiveViewer(
@@ -68,8 +90,9 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                             : null,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                       ),
                     );
                   },
@@ -80,7 +103,10 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
                         children: [
                           Icon(Icons.error, size: 48, color: Colors.red),
                           SizedBox(height: 8),
-                          Text('Failed to load image'),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(color: AppTheme.textSecondaryDark),
+                          ),
                         ],
                       ),
                     );
@@ -105,9 +131,13 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Owner approved successfully'),
+        SnackBar(
+          content: const Text('Owner approved successfully'),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
         ),
       );
       _loadRequests();
@@ -118,6 +148,10 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
         SnackBar(
           content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
         ),
       );
     }
@@ -129,12 +163,32 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
-          title: const Text('Reject Owner Request'),
+          backgroundColor: AppTheme.cardColorDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          ),
+          title: const Text(
+            'Reject Owner Request',
+            style: TextStyle(color: AppTheme.textPrimaryDark),
+          ),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: AppTheme.textPrimaryDark),
+            decoration: InputDecoration(
               labelText: 'Reason for rejection',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(color: AppTheme.textSecondaryDark),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                borderSide: const BorderSide(color: AppTheme.dividerColorDark),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                borderSide: const BorderSide(color: AppTheme.dividerColorDark),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                borderSide: const BorderSide(color: AppTheme.primaryColor),
+              ),
             ),
             maxLines: 3,
           ),
@@ -143,9 +197,14 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(context, controller.text),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                ),
+              ),
               child: const Text('Reject'),
             ),
           ],
@@ -165,9 +224,13 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Owner request rejected'),
+        SnackBar(
+          content: const Text('Owner request rejected'),
           backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
         ),
       );
       _loadRequests();
@@ -178,6 +241,10 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
         SnackBar(
           content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
         ),
       );
     }
@@ -185,18 +252,30 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 110,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondaryDark,
+                fontSize: 13,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: AppTheme.textPrimaryDark,
+                fontSize: 13,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -205,134 +284,299 @@ class _AdminOwnerRequestsScreenState extends State<AdminOwnerRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+        ),
+      );
     }
 
     if (_error.isNotEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error: $_error'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadRequests,
-              child: const Text('Retry'),
-            ),
-          ],
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.cardColorDark,
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+            border: Border.all(color: Colors.red.withOpacity(0.3)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Error: $_error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.textPrimaryDark),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadRequests,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  ),
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadRequests,
+      color: AppTheme.primaryColor,
+      backgroundColor: AppTheme.cardColorDark,
       child: _pendingOwners.isEmpty
-          ? const Center(child: Text('No pending owner requests'))
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _pendingOwners.length,
-        itemBuilder: (context, index) {
-          final owner = _pendingOwners[index];
-          final user = owner['user'] as Map<String, dynamic>?;
-          final ownerProfile = owner['ownerProfile'] as Map<String, dynamic>?;
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ExpansionTile(
-              leading: CircleAvatar(
-                backgroundImage: ownerProfile?['profilePhotoUrl'] != null
-                    ? NetworkImage(ownerProfile!['profilePhotoUrl'])
-                    : null,
-                child: ownerProfile?['profilePhotoUrl'] == null
-                    ? const Icon(Icons.person)
-                    : null,
-              ),
-              title: Text(user?['fullName'] ?? 'N/A'),
-              subtitle: Text(user?['email'] ?? 'N/A'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoRow('Phone', user?['phoneNumber'] ?? 'N/A'),
-                      _buildInfoRow('PAN Number', ownerProfile?['panNumber'] ?? 'N/A'),
-                      _buildInfoRow('Address', ownerProfile?['address'] ?? 'N/A'),
-                      _buildInfoRow('Status', ownerProfile?['status'] ?? 'N/A'),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Documents:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (ownerProfile?['citizenshipFrontUrl'] != null)
-                            ElevatedButton.icon(
-                              onPressed: () => _showDocument(
-                                context,
-                                ownerProfile!['citizenshipFrontUrl'],
-                                'Citizenship Front',
-                              ),
-                              icon: const Icon(Icons.image, size: 18),
-                              label: const Text('Front'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                          if (ownerProfile?['citizenshipBackUrl'] != null)
-                            ElevatedButton.icon(
-                              onPressed: () => _showDocument(
-                                context,
-                                ownerProfile!['citizenshipBackUrl'],
-                                'Citizenship Back',
-                              ),
-                              icon: const Icon(Icons.image, size: 18),
-                              label: const Text('Back'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _approveOwner(owner['_id'] ?? owner['id']),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                              ),
-                              icon: const Icon(Icons.check),
-                              label: const Text('Approve'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _rejectOwner(owner['_id'] ?? owner['id']),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                              ),
-                              icon: const Icon(Icons.close),
-                              label: const Text('Reject'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.pending_actions,
+                    size: 64,
+                    color: AppTheme.textTertiaryDark,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No pending owner requests',
+                    style: TextStyle(
+                      color: AppTheme.textSecondaryDark,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _pendingOwners.length,
+              itemBuilder: (context, index) {
+                final owner = _pendingOwners[index];
+                final user = owner['user'] as Map<String, dynamic>?;
+                final ownerProfile = owner['ownerProfile'] as Map<String, dynamic>?;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColorDark,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    border: Border.all(
+                      color: AppTheme.dividerColorDark.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
+                    ),
+                    child: ExpansionTile(
+                      tilePadding: const EdgeInsets.all(16),
+                      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      leading: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFFF9800),
+                            width: 2,
+                          ),
+                        ),
+                        child: ownerProfile?['profilePhotoUrl'] != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  ownerProfile!['profilePhotoUrl'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const CircleAvatar(
+                                      backgroundColor: AppTheme.backgroundDark,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Color(0xFFFF9800),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                            : CircleAvatar(
+                                backgroundColor: AppTheme.backgroundDark,
+                                child: Text(
+                                  (user?['fullName'] ?? 'N')[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF9800),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      title: Text(
+                        user?['fullName'] ?? 'N/A',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimaryDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            user?['email'] ?? 'N/A',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondaryDark,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF9800).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                              border: Border.all(
+                                color: const Color(0xFFFF9800),
+                              ),
+                            ),
+                            child: Text(
+                              ownerProfile?['status'] ?? 'PENDING',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFF9800),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.backgroundDark,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Owner Details',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimaryDark,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow('Phone', user?['phoneNumber'] ?? 'N/A'),
+                              _buildInfoRow('PAN Number', ownerProfile?['panNumber'] ?? 'N/A'),
+                              _buildInfoRow('Address', ownerProfile?['address'] ?? 'N/A'),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Documents',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimaryDark,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  if (ownerProfile?['citizenshipFrontUrl'] != null)
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () => _showDocument(
+                                          context,
+                                          ownerProfile!['citizenshipFrontUrl'],
+                                          'Citizenship Front',
+                                        ),
+                                        icon: const Icon(Icons.image, size: 18),
+                                        label: const Text('Front'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppTheme.primaryColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (ownerProfile?['citizenshipFrontUrl'] != null &&
+                                      ownerProfile?['citizenshipBackUrl'] != null)
+                                    const SizedBox(width: 12),
+                                  if (ownerProfile?['citizenshipBackUrl'] != null)
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () => _showDocument(
+                                          context,
+                                          ownerProfile!['citizenshipBackUrl'],
+                                          'Citizenship Back',
+                                        ),
+                                        icon: const Icon(Icons.image, size: 18),
+                                        label: const Text('Back'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppTheme.primaryColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _approveOwner(owner['_id'] ?? owner['id']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF4CAF50),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.check),
+                                      label: const Text('Approve'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _rejectOwner(owner['_id'] ?? owner['id']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.close),
+                                      label: const Text('Reject'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
