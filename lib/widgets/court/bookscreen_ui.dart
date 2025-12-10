@@ -265,9 +265,13 @@ class _BookingScreenState extends State<BookingScreen> {
               children: [
                 const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
                 const SizedBox(width: 12),
-                Text(
+                Expanded(
+                  child:Text(
                   DateFormat('EEEE, MMMM d, y').format(_selectedDate),
                   style: Theme.of(context).textTheme.bodyLarge,
+                  overflow: TextOverflow.ellipsis, // Add this too
+                  maxLines: 1, // And this
+                ),
                 ),
               ],
             ),

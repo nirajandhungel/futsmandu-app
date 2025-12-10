@@ -5,7 +5,6 @@ import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/theme.dart';
 import '../../utils/validators.dart';
-import '../../utils/helpers.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_textfield.dart';
 
@@ -29,12 +28,15 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  
+Future<void> _handleLogin() async {
   if (!_formKey.currentState!.validate()) return;
 
   setState(() => _isLoading = true);
 
   final authProvider = context.read<AuthProvider>();
+  authProvider.clearError(); // Clear previous errors
+  
   final success = await authProvider.login(
     email: _emailController.text.trim(),
     password: _passwordController.text,
@@ -62,12 +64,135 @@ class _LoginScreenState extends State<LoginScreen> {
       context.go(RouteNames.home);
     }
   } else {
-    Helpers.showSnackbar(
-      context,
-      authProvider.errorMessage ?? 'Login failed',
-      isError: true,
-    );
+    // Use the formatted error message which includes suggestion
+    final errorMessage = authProvider.formattedErrorMessage ?? 'Login failed';
+    
+    // Show error dialog with message and suggestion
+    _showErrorDialog(errorMessage);
   }
+}
+
+
+
+void _showErrorDialog(String errorMessage) {
+  // Split message and suggestion if they exist
+  final parts = errorMessage.split('\n\n');
+  final mainMessage = parts[0];
+  final suggestion = parts.length > 1 ? parts[1] : null;
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: AppTheme.cardColorDark,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+      ),
+      title: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Login Failed',
+            style: TextStyle(
+              color: AppTheme.textPrimaryDark,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            mainMessage,
+            style: const TextStyle(
+              color: AppTheme.textPrimaryDark,
+              fontSize: 15,
+            ),
+          ),
+          if (suggestion != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      suggestion,
+                      style: TextStyle(
+                        color: AppTheme.textPrimaryDark,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        // Show "Reset Password" button if error contains "reset password" text
+        if (suggestion?.toLowerCase().contains('reset') == true)
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to reset password screen
+              // context.push(RouteNames.resetPassword);
+              // Or show reset password dialog
+              // _showResetPasswordDialog();
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+            ),
+            child: const Text('Reset Password'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.textSecondaryDark,
+          ),
+          child: const Text('Close'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            // Clear only password field
+            _passwordController.clear();
+            // Optionally focus on password field
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+          ),
+          child: const Text('Try Again'),
+        ),
+      ],
+    ),
+  );
 }
 
   @override
@@ -128,7 +253,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: () {
                       // TODO: Implement forgot password
-                      Helpers.showSnackbar(context, 'Coming soon!');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Coming soon!'),
+                          backgroundColor: AppTheme.primaryColor,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          ),
+                        ),
+                      );
                     },
                     child: const Text('Forgot Password?'),
                   ),

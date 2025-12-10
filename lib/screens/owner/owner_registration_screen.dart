@@ -872,7 +872,7 @@ class _OwnerKycScreenState extends State<OwnerKycScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.paddingM),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
