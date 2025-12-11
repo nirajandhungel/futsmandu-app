@@ -172,38 +172,83 @@ class AdminService {
   }
 
   // Update User Status
-  Future<User> updateUserStatus(
-    String userId, {
-    required bool isActive,
-    String? reason,
-  }) async {
-    try {
-      final response = await _apiService.patch<Map<String, dynamic>>(
-        '${AppConstants.adminUserStatus}/$userId/status',
-        data: {
-          'isActive': isActive,
-          if (reason != null) 'reason': reason,
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
+ // Update User Status
+Future<User> updateUserStatus(
+  String userId, {
+  required bool isActive,
+  String? reason,
+}) async {
+  try {
+    final response = await _apiService.patch<Map<String, dynamic>>(
+      '${AppConstants.adminUserStatus}/$userId/status',
+      data: {
+        'isActive': isActive,
+        if (reason != null) 'reason': reason,
+      },
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
 
-      if (!response.success || response.data == null) {
-        throw Exception(response.message ?? 'Failed to update user status');
-      }
+    print('📥 AdminService.updateUserStatus response:');
+    print('📥 Success: ${response.success}');
+    print('📥 Data: ${response.data}');
+    print('📥 Error: ${response.error}');
+    print('📥 Message: ${response.message}');
 
-      final data = response.data as Map<String, dynamic>;
-      final user = data['user'] as Map<String, dynamic>?;
+    if (!response.success) {
+      String errorMessage = 'Failed to update user status';
       
-      if (user == null) {
-        throw Exception('User data not found in response');
+      // Check if the operation actually succeeded but API returns success: false
+      final data = response.data as Map<String, dynamic>?;
+      if (data != null && data.containsKey('user')) {
+        print('⚠️ API returned success: false but has user data, assuming operation succeeded');
+        final userData = data['user'] as Map<String, dynamic>;
+        return User.fromJson(userData);
       }
-
-      return User.fromJson(user);
-    } catch (e) {
-      throw Exception('Failed to update user status: ${e.toString()}');
+      
+      if (response.error != null) {
+        errorMessage = response.error!.formattedMessage;
+      } else if (response.message != null) {
+        errorMessage = response.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
-  }
 
+    // Try to extract user from response
+    final data = response.data as Map<String, dynamic>;
+    
+    // Check for user in different possible locations
+    if (data.containsKey('user') && data['user'] is Map<String, dynamic>) {
+      return User.fromJson(data['user'] as Map<String, dynamic>);
+    }
+    
+    if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+      final innerData = data['data'] as Map<String, dynamic>;
+      if (innerData.containsKey('user') && innerData['user'] is Map<String, dynamic>) {
+        return User.fromJson(innerData['user'] as Map<String, dynamic>);
+      }
+      if (innerData.containsKey('id')) {
+        return User.fromJson(innerData);
+      }
+    }
+    
+    if (data.containsKey('id')) {
+      return User.fromJson(data);
+    }
+
+    // If we reach here, the API didn't return user data
+    // Create a minimal user with updated status
+    print('⚠️ No user data returned from API, creating minimal user object');
+    return User.fromJson({
+      'id': userId,
+      'isActive': isActive,
+    });
+    
+  } catch (e) {
+    print('❌ AdminService.updateUserStatus error: $e');
+    rethrow;
+  }
+}
   // Delete User
   Future<void> deleteUser(String userId) async {
     try {

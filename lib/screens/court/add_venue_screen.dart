@@ -312,7 +312,7 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
                           checkmarkColor: Colors.white,
                           selectedColor: AppTheme.primaryColor,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
+                            color: isSelected ? Colors.white : Colors.white,
                           ),
                         );
                       }).toList(),

@@ -67,42 +67,74 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<void> _updateUserStatus(String userId, bool isActive) async {
-    try {
-      await _adminService.updateUserStatus(
-        userId,
-        isActive: isActive,
-        reason: isActive ? 'User reactivated' : 'User suspended by admin',
-      );
+  try {
+    // OPTIMISTIC UPDATE: Update UI immediately
+    _updateUserStatusLocally(userId, isActive);
+    
+    // Then call API
+    await _adminService.updateUserStatus(
+      userId,
+      isActive: isActive,
+      reason: isActive ? 'User reactivated' : 'User suspended by admin',
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('User ${isActive ? 'activated' : 'suspended'} successfully'),
-          backgroundColor: isActive ? Colors.green : Colors.orange,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-          ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('User ${isActive ? 'activated' : 'suspended'} successfully'),
+        backgroundColor: isActive ? Colors.green : Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
         ),
-      );
-      _loadUsers();
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-          ),
+      ),
+    );
+    
+    // Refresh from API to ensure data is in sync
+    // Use a small delay to show the optimistic update
+    await Future.delayed(const Duration(milliseconds: 500));
+    _loadUsers();
+    
+  } catch (e) {
+    if (!mounted) return;
+    
+    // If API fails, revert the optimistic update
+    _updateUserStatusLocally(userId, !isActive);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: ${e.toString()}'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
         ),
-      );
-    }
+      ),
+    );
   }
+}
 
+// Helper method to update user status locally
+void _updateUserStatusLocally(String userId, bool isActive) {
+  setState(() {
+    // Update in main users list
+    final userIndex = _users.indexWhere((user) => user.id == userId);
+    if (userIndex != -1) {
+      final oldUser = _users[userIndex];
+      // Update the user's isActive status
+      // You need a copyWith method in your User model
+      _users[userIndex] = oldUser.copyWith(isActive: isActive);
+    }
+    
+    // Update in filtered users list
+    final filteredIndex = _filteredUsers.indexWhere((user) => user.id == userId);
+    if (filteredIndex != -1) {
+      final oldUser = _filteredUsers[filteredIndex];
+      _filteredUsers[filteredIndex] = oldUser.copyWith(isActive: isActive);
+    }
+  });
+}
   Future<void> _deleteUser(String userId) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -323,7 +355,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             color: AppTheme.primaryColor,
             backgroundColor: AppTheme.cardColorDark,
             child: _filteredUsers.isEmpty
-                ? Center(
+                ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -332,8 +364,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           size: 64,
                           color: AppTheme.textTertiaryDark,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                         SizedBox(height: 16),
+                         Text(
                           'No users found',
                           style: TextStyle(
                             color: AppTheme.textSecondaryDark,

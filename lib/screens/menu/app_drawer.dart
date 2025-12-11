@@ -92,223 +92,266 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: AppTheme.backgroundDark,
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
-          final user = authProvider.user;
-          final isOwnerMode = user?.isInOwnerMode ?? false;
+  return Drawer(
+    backgroundColor: AppTheme.backgroundDark,
+    child: Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        final user = authProvider.user;
+        final isOwnerMode = user?.isInOwnerMode ?? false;
+        final isAdmin = user?.isAdmin ?? false;
 
-          return ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              UserAccountsDrawerHeader(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.primaryColor,
-                      AppTheme.darkPrimaryColor,
-                    ],
-                  ),
+        return ListView(
+          padding: EdgeInsets.zero, // Remove top padding, let header handle it
+          children: [
+            // Custom Drawer Header to fix layout issues
+            Container(
+              height: 180, // Fixed height to prevent overflow
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.darkPrimaryColor,
+                  ],
                 ),
-                currentAccountPicture: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    user?.fullName.isNotEmpty ?? false
-                        ? user!.fullName[0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 48, // Safe area for status bar
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
                 ),
-                accountName: Text(
-                  user?.fullName ?? 'Guest',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                accountEmail: Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user?.email ?? ''),
-                    const SizedBox(height: 4),
+                    // Avatar and Name Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            user?.fullName.isNotEmpty ?? false
+                                ? user!.fullName[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.fullName ?? 'Guest',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?.email ?? '',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Mode Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      constraints: const BoxConstraints(maxWidth: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        isOwnerMode ? '👔 Owner Mode' : '⚽ Player Mode',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isOwnerMode ? '👔' : '⚽',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              isOwnerMode ? 'Owner Mode' : 'Player Mode',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+            ),
 
-              // OWNER MODE NAVIGATION
-              if (isOwnerMode) ...[
-                ListTile(
-                  leading: const Icon(Icons.dashboard, color: AppTheme.primaryColor),
-                  title: const Text('Owner Dashboard', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(RouteNames.ownerDashboard);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.stadium, color: AppTheme.textPrimaryDark),
-                  title: const Text('My Venues', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push(RouteNames.myVenues);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.calendar_today, color: AppTheme.textPrimaryDark),
-                  title: const Text('Manage Bookings', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to owner bookings screen
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.analytics, color: AppTheme.textPrimaryDark),
-                  title: const Text('Analytics', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Helpers.showSnackbar(context, 'Analytics coming soon!');
-                  },
-                ),
-              ]
-              // PLAYER MODE NAVIGATION
-              else ...[
-                ListTile(
-                  leading: const Icon(Icons.home, color: AppTheme.textPrimaryDark),
-                  title: const Text('Home', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(RouteNames.home);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.sports_soccer, color: AppTheme.textPrimaryDark),
-                  title: const Text('Browse Courts', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(RouteNames.home);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.book_online, color: AppTheme.textPrimaryDark),
-                  title: const Text('My Bookings', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(RouteNames.mybookings);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.group, color: AppTheme.textPrimaryDark),
-                  title: const Text('Join Teammates', style: TextStyle(color: AppTheme.textPrimaryDark)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(RouteNames.joinTeammates);
-                  },
-                ),
-              ],
-
-              const Divider(color: AppTheme.dividerColorDark),
-
-              // COMMON NAVIGATION
-              ListTile(
-                leading: const Icon(Icons.person, color: AppTheme.textPrimaryDark),
-                title: const Text('Profile', style: TextStyle(color: AppTheme.textPrimaryDark)),
+            // OWNER MODE NAVIGATION
+            if (isOwnerMode) ...[
+              _buildListTile(
+                icon: Icons.dashboard,
+                title: 'Owner Dashboard',
+                color: AppTheme.primaryColor,
                 onTap: () {
                   Navigator.pop(context);
-                  context.push(RouteNames.profile);
+                  context.go(RouteNames.ownerDashboard);
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.settings, color: AppTheme.textPrimaryDark),
-                title: const Text('Settings', style: TextStyle(color: AppTheme.textPrimaryDark)),
+              _buildListTile(
+                icon: Icons.stadium,
+                title: 'My Venues',
                 onTap: () {
                   Navigator.pop(context);
-                  Helpers.showSnackbar(context, 'Settings coming soon!');
+                  context.push(RouteNames.myVenues);
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.help, color: AppTheme.textPrimaryDark),
-                title: const Text('Help & Support', style: TextStyle(color: AppTheme.textPrimaryDark)),
+              _buildListTile(
+                icon: Icons.calendar_today,
+                title: 'Manage Bookings',
                 onTap: () {
                   Navigator.pop(context);
-                  Helpers.showSnackbar(context, 'Support coming soon!');
+                  // Navigate to owner bookings screen
                 },
               ),
+              _buildListTile(
+                icon: Icons.analytics,
+                title: 'Analytics',
+                onTap: () {
+                  Navigator.pop(context);
+                  Helpers.showSnackbar(context, 'Analytics coming soon!');
+                },
+              ),
+            ]
+            // PLAYER MODE NAVIGATION
+            else ...[
+              _buildListTile(
+                icon: Icons.home,
+                title: 'Home',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.home);
+                },
+              ),
+              _buildListTile(
+                icon: Icons.sports_soccer,
+                title: 'Browse Courts',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.home);
+                },
+              ),
+              _buildListTile(
+                icon: Icons.book_online,
+                title: 'My Bookings',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.mybookings);
+                },
+              ),
+              _buildListTile(
+                icon: Icons.group,
+                title: 'Join Teammates',
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.joinTeammates);
+                },
+              ),
+            ],
 
-              // Admin Dashboard
-              if (user?.isAdmin ?? false) ...[
-                const Divider(color: AppTheme.dividerColorDark),
-                ListTile(
-                  leading: const Icon(Icons.admin_panel_settings, color: Colors.red),
-                  title: const Text('Admin Dashboard', style: TextStyle(color: Colors.red)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push(RouteNames.adminDashboard);
-                  },
-                ),
-              ],
+            const Divider(color: AppTheme.dividerColorDark, height: 1),
 
-              const Divider(color: AppTheme.dividerColorDark),
-              const SizedBox(height: 8),
+            // COMMON NAVIGATION
+            _buildListTile(
+              icon: Icons.person,
+              title: 'Profile',
+              onTap: () {
+                Navigator.pop(context);
+                context.push(RouteNames.profile);
+              },
+            ),
+            _buildListTile(
+              icon: Icons.settings,
+              title: 'Settings',
+              onTap: () {
+                Navigator.pop(context);
+                Helpers.showSnackbar(context, 'Settings coming soon!');
+              },
+            ),
+            _buildListTile(
+              icon: Icons.help,
+              title: 'Help & Support',
+              onTap: () {
+                Navigator.pop(context);
+                Helpers.showSnackbar(context, 'Support coming soon!');
+              },
+            ),
 
-              // MODE TOGGLE BUTTON
-              if (user != null && !user.isAdmin) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton.icon(
-                      onPressed: isOwnerMode
-                          ? () => _handleDeactivateOwnerMode(context)
-                          : () => _handleActivateOwnerMode(context),
-                      icon: Icon(isOwnerMode ? Icons.person : Icons.business_center),
-                      label: Text(isOwnerMode ? 'Switch to Player Mode' : 'Switch to Owner Mode'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isOwnerMode ? Colors.green : Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+            // Admin Dashboard
+            if (isAdmin) ...[
+              const Divider(color: AppTheme.dividerColorDark, height: 1),
+              _buildListTile(
+                icon: Icons.admin_panel_settings,
+                title: 'Admin Dashboard',
+                color: Colors.red,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push(RouteNames.adminDashboard);
+                },
+              ),
+            ],
 
-              // LOGOUT BUTTON
+            const Divider(color: AppTheme.dividerColorDark, height: 1),
+            const SizedBox(height: 12),
+
+            // MODE TOGGLE BUTTON
+            if (user != null && !isAdmin) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 60,
+                  height: 52, // Reduced height for better spacing
                   child: ElevatedButton.icon(
-                    onPressed: () => _handleLogout(context),
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
+                    onPressed: isOwnerMode
+                        ? () => _handleDeactivateOwnerMode(context)
+                        : () => _handleActivateOwnerMode(context),
+                    icon: Icon(isOwnerMode ? Icons.person : Icons.business_center),
+                    label: Text(
+                      isOwnerMode ? 'Switch to Player Mode' : 'Switch to Owner Mode',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.errorColor,
+                      backgroundColor: isOwnerMode ? Colors.green : Colors.blueAccent,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -317,12 +360,61 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 16),
+              const SizedBox(height: 8), // Reduced spacing
             ],
-          );
-        },
-      ),
-    );
-  }
+
+            // LOGOUT BUTTON
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52, // Reduced height for better spacing
+                child: ElevatedButton.icon(
+                  onPressed: () => _handleLogout(context),
+                  icon: const Icon(Icons.logout),
+                  label: const Text(
+                    'Logout',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.errorColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20), // Final bottom spacing
+          ],
+        );
+      },
+    ),
+  );
+}
+
+// Helper method for consistent ListTile styling
+Widget _buildListTile({
+  required IconData icon,
+  required String title,
+  required VoidCallback onTap,
+  Color color = AppTheme.textPrimaryDark,
+}) {
+  return ListTile(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+    leading: Icon(icon, color: color),
+    title: Text(
+      title,
+      style: TextStyle(color: color),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
+    onTap: onTap,
+  );
+}
+
+  
 }
