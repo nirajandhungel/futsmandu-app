@@ -565,7 +565,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, provider, _) {
         if (provider.venues.isEmpty) return const SizedBox.shrink();
         
-        final featuredVenues = provider.venues.take(3).toList();
+        final featuredVenues = provider.venues.toList();
+        // final featuredVenues = provider.venues.take(3).toList();
         
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
